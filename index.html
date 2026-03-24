@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Data Preparation Bench</title>
+  <meta name="description" content="Measuring how well agents construct supervision data from long-form domain books." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=PT+Mono&family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <style>
+    :root {
+      --bg: #fbfcff;
+      --bg-soft: #f4f7fb;
+      --panel: #ffffff;
+      --text: #101828;
+      --muted: #667085;
+      --border: #e4e7ec;
+      --border-strong: #d0d5dd;
+      --accent: #2563eb;
+      --accent-soft: #eaf1ff;
+      --shadow: 0 12px 28px rgba(16, 24, 40, 0.06);
+      --radius: 20px;
+      --max-width: 1180px;
+    }
+
+    html[data-theme="dark"] {
+      --bg: #0b1220;
+      --bg-soft: #0f172a;
+      --panel: #111b2f;
+      --text: #e8eef8;
+      --muted: #9fb0c9;
+      --border: #20304a;
+      --border-strong: #2e4366;
+      --accent: #79a8ff;
+      --accent-soft: rgba(121, 168, 255, 0.12);
+      --shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, system-ui, sans-serif;
+      line-height: 1.6;
+    }
+    a { color: inherit; text-decoration: none; }
+    .container { width: min(calc(100% - 32px), var(--max-width)); margin: 0 auto; }
+    .mono { font-family: "JetBrains Mono", monospace; }
+
+    .navbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(12px);
+      background: color-mix(in srgb, var(--bg) 92%, transparent);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-content {
+      min-height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+    .nav-left, .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .logo {
+      font-family: "Space Mono", monospace;
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .logo-accent { color: var(--accent); }
+    .nav-links {
+      display: flex;
+      gap: 24px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .theme-toggle, .nav-github, .hamburger {
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--text);
+      height: 40px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: .18s ease;
+    }
+    .theme-toggle:hover, .nav-github:hover, .hamburger:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow);
+    }
+    .theme-toggle, .hamburger { width: 40px; }
+    .nav-github {
+      width: 40px;
+      padding: 0;
+    }
+    .hamburger {
+      display: none;
+      font-size: 1rem;
+    }
+
+    .hero {
+      padding: 76px 0 34px;
+    }
+    .hero-title {
+      margin: 0;
+      font-family: "Space Mono", monospace;
+      font-size: clamp(2.7rem, 6vw, 4.9rem);
+      line-height: 1;
+      letter-spacing: -0.05em;
+    }
+    .title-accent { color: var(--accent); }
+    .hero-subtitle {
+      margin: 16px 0 0;
+      font-size: 1.18rem;
+      font-weight: 600;
+      max-width: 860px;
+    }
+    .hero-description {
+      max-width: 860px;
+      color: var(--muted);
+      margin-top: 14px;
+      font-size: 1rem;
+    }
+    .hero-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 26px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 12px 18px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      font-weight: 700;
+      font-size: 0.95rem;
+      transition: .18s ease;
+      background: var(--panel);
+    }
+    .btn:hover { transform: translateY(-1px); box-shadow: var(--shadow); }
+    .btn-primary {
+      background: var(--text);
+      color: var(--bg);
+      border-color: var(--text);
+    }
+    .btn-secondary {
+      background: var(--panel);
+      color: var(--text);
+    }
+    .hero-kpis {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 32px;
+    }
+    .kpi {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 16px 18px;
+      box-shadow: var(--shadow);
+    }
+    .kpi-value {
+      font-size: 1.28rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+    }
+    .kpi-label {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    section {
+      padding: 40px 0;
+    }
+    .section-title {
+      margin: 0 0 10px;
+      font-size: clamp(1.7rem, 3vw, 2.4rem);
+      line-height: 1.1;
+      letter-spacing: -0.04em;
+    }
+    .section-subtitle {
+      margin: 0 0 22px;
+      color: var(--muted);
+      max-width: 920px;
+    }
+    .section-subtitle.small {
+      margin-top: 18px;
+      font-size: 1.05rem;
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .leaderboard-chart,
+    .panel,
+    .bench-card,
+    .observation-card,
+    .citation-box,
+    .setup-box {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+    }
+
+    .leaderboard-chart,
+    .panel,
+    .citation-box,
+    .setup-box {
+      padding: 22px;
+    }
+
+    .leaderboard-chart-wrapper {
+      height: 400px;
+      position: relative;
+    }
+    .leaderboard-chart-wrapper.short {
+      height: 340px;
+    }
+    .chart-footnote, .leaderboard-footnote {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin: 14px 0 0;
+    }
+
+    .leaderboard-table {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--panel);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 760px;
+    }
+    th, td {
+      padding: 13px 14px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      white-space: nowrap;
+      font-size: 0.94rem;
+    }
+    th {
+      background: var(--bg-soft);
+      color: var(--muted);
+      font-weight: 700;
+    }
+    tbody tr:hover { background: var(--bg-soft); }
+    .rank-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--bg-soft);
+      font-weight: 700;
+    }
+    .score-strong { font-weight: 800; }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .tab-btn {
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--muted);
+      padding: 10px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+    .tab-btn.active {
+      background: var(--text);
+      border-color: var(--text);
+      color: var(--bg);
+    }
+
+    .pipeline {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .pipeline-step {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 18px;
+      position: relative;
+    }
+    .step-index {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+    .pipeline-step h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+      line-height: 1.25;
+    }
+    .pipeline-step p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.94rem;
+    }
+    .pipeline-step::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      right: -8px;
+      width: 16px;
+      height: 1px;
+      background: var(--border-strong);
+    }
+    .pipeline-step:last-child::after { display: none; }
+
+    .grid-2, .grid-3, .observations-grid, .task-grid {
+      display: grid;
+      gap: 18px;
+    }
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3, .task-grid, .observations-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+    .bench-card, .observation-card {
+      padding: 20px;
+    }
+    .bench-tag {
+      display: inline-flex;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--bg-soft);
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .bench-card h3, .observation-card h4 {
+      margin: 0 0 8px;
+      font-size: 1.02rem;
+      line-height: 1.3;
+    }
+    .bench-card p, .observation-card p, .setup-box p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .pill {
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--bg-soft);
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    .setup-box ul {
+      margin: 14px 0 0;
+      padding-left: 18px;
+      color: var(--muted);
+    }
+    .setup-box li + li { margin-top: 8px; }
+
+    .observation-card .obs-index {
+      color: var(--accent);
+      font-family: "JetBrains Mono", monospace;
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .citation-box {
+      position: relative;
+    }
+    .citation-text {
+      margin: 0;
+      overflow: auto;
+      white-space: pre-wrap;
+      font-family: "JetBrains Mono", monospace;
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.7;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .footer {
+      padding: 30px 0 42px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.92rem;
+      margin-top: 12px;
+    }
+    .footer-inner {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 1080px) {
+      .hero-kpis,
+      .grid-3,
+      .task-grid,
+      .observations-grid,
+      .pipeline {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .pipeline-step:nth-child(2n)::after { display: none; }
+    }
+
+    @media (max-width: 760px) {
+      .hamburger { display: inline-flex; }
+      .nav-links {
+        display: none;
+        position: absolute;
+        top: 72px;
+        left: 16px;
+        right: 16px;
+        padding: 16px;
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        background: var(--panel);
+        box-shadow: var(--shadow);
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 14px;
+      }
+      .nav-links.open { display: flex; }
+      .hero-kpis,
+      .grid-2,
+      .grid-3,
+      .task-grid,
+      .observations-grid,
+      .pipeline {
+        grid-template-columns: 1fr;
+      }
+      .pipeline-step::after { display: none; }
+      .leaderboard-chart-wrapper,
+      .leaderboard-chart-wrapper.short {
+        height: 300px;
+      }
+      .hero-title { font-size: 2.8rem; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container nav-content">
+      <div class="nav-left">
+        <button class="hamburger" id="hamburger-btn" aria-label="Toggle menu">☰</button>
+        <div class="logo">Data Preparation<span class="logo-accent">Bench</span></div>
+      </div>
+      <div class="nav-right">
+        <div class="nav-links" id="nav-links">
+          <a href="#leaderboard">Leaderboard</a>
+          <a href="#about">About</a>
+          <a href="#benchmarks">Benchmarks</a>
+          <a href="#observations">Observations</a>
+          <a href="#citation">Citation</a>
+        </div>
+        <a href="https://github.com/TechNomad-ds/text2qa-builder" target="_blank" rel="noopener" class="nav-github" aria-label="GitHub">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"></path>
+          </svg>
+        </a>
+        <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme">◐</button>
+      </div>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="container">
+      <h1 class="hero-title">
+        <span class="title-main">Data Preparation</span><span class="title-accent">Bench</span>
+      </h1>
+      <p class="hero-subtitle">Measuring how well AI agents construct supervision data from long-form domain books</p>
+      <div class="hero-description">
+        <p>Can AI agents turn textbooks and reference books into useful SFT data? Data Preparation Bench studies this question by asking agents to generate instruction-response supervision from domain books, fine-tune a base model on the resulting data, and evaluate transfer on downstream benchmarks in law, medicine, and finance.</p>
+      </div>
+      <div class="hero-buttons">
+        <a href="#leaderboard" class="btn btn-primary">Explore Results</a>
+        <a href="https://github.com/TechNomad-ds/text2qa-builder" target="_blank" rel="noopener" class="btn btn-secondary">GitHub</a>
+      </div>
+      <div class="hero-kpis">
+        <div class="kpi"><div class="kpi-value">3</div><div class="kpi-label">Domains</div></div>
+        <div class="kpi"><div class="kpi-value">26</div><div class="kpi-label">Public metrics</div></div>
+        <div class="kpi"><div class="kpi-value">7</div><div class="kpi-label">Configurations</div></div>
+        <div class="kpi"><div class="kpi-value">Soon</div><div class="kpi-label">Paper release</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="leaderboard">
+    <div class="container">
+      <h2 class="section-title">Leaderboard</h2>
+      <div class="leaderboard-chart">
+        <div class="leaderboard-chart-wrapper">
+          <canvas id="overallChart"></canvas>
+        </div>
+        <p class="chart-footnote"><sup>1</sup> The public overall score is computed as the average of three domain-normalized scores: law, medicine, and finance. Within each domain, the released score is the unweighted average over the public task metrics shown on this page. Finance percentages are normalized to the [0, 1] range before aggregation.</p>
+        <p class="chart-footnote"><sup>2</sup> This page reflects the current public slice only. Additional evaluation modules and the paper will be added in a later release.</p>
+      </div>
+
+      <div class="panel" style="margin-top:18px;">
+        <div class="leaderboard-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Method</th>
+                <th>Avg</th>
+                <th>Law</th>
+                <th>Medicine</th>
+                <th>Finance</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboard-data"></tbody>
+          </table>
+        </div>
+        <p class="leaderboard-footnote"><sup>*</sup> Finance values are aggregated from CPA, FinEval, and XFinBench. One finance source entry was provided as <span class="mono">0.533x3</span> and is rendered here as <span class="mono">0.5333</span> pending confirmation.</p>
+      </div>
+
+      <h3 class="section-subtitle small">Detailed Breakdown by Domain</h3>
+      <div class="leaderboard-chart">
+        <div class="leaderboard-chart-wrapper short">
+          <canvas id="domainChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="about">
+    <div class="container">
+      <h2 class="section-title">About</h2>
+      <div class="grid-2">
+        <div class="setup-box">
+          <p>Data Preparation Bench evaluates whether agents can build domain-grounded supervision data from books. The current release focuses on the <strong>QA generation</strong> side of the project: data is constructed from markdown books, used to fine-tune a base model, and then scored on downstream benchmarks to indirectly reflect data quality.</p>
+          <ul>
+            <li><strong>Knowledge sources:</strong> domain textbooks and reference books collected from broad-coverage ebook sources</li>
+            <li><strong>Domains:</strong> law, medicine, finance</li>
+            <li><strong>Base model:</strong> Qwen2.5-7B</li>
+            <li><strong>Instruction-following supplement:</strong> Dolly-15k</li>
+            <li><strong>Agent families:</strong> Claude, Gemini, GPT-5.2, plus Qwen baseline</li>
+          </ul>
+        </div>
+        <div class="setup-box">
+          <p><strong>Experimental setup</strong></p>
+          <ul>
+            <li>Books are converted from PDF to markdown before data construction.</li>
+            <li>Agents generate instruction-response QA pairs under simple or detailed prompts.</li>
+            <li>The resulting supervision is used for fine-tuning, then evaluated on public domain benchmarks.</li>
+            <li>For tasks that rely on string matching, an additional LLM-based review step can be applied to reduce false negatives.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="process-flow">
+    <div class="container">
+      <h2 class="section-title">Pipeline</h2>
+      <div class="pipeline">
+        <div class="pipeline-step">
+          <div class="step-index">1</div>
+          <h3>Collect books</h3>
+          <p>Gather domain textbooks and long-form reference material with broad topic coverage.</p>
+        </div>
+        <div class="pipeline-step">
+          <div class="step-index">2</div>
+          <h3>Convert to markdown</h3>
+          <p>Transform PDFs into markdown so agents can operate over clean machine-readable text.</p>
+        </div>
+        <div class="pipeline-step">
+          <div class="step-index">3</div>
+          <h3>Generate supervision</h3>
+          <p>Use agents to produce instruction-response QA under different prompting specifications.</p>
+        </div>
+        <div class="pipeline-step">
+          <div class="step-index">4</div>
+          <h3>Fine-tune base model</h3>
+          <p>Train a base model on the generated data, with Dolly added to strengthen instruction following.</p>
+        </div>
+        <div class="pipeline-step">
+          <div class="step-index">5</div>
+          <h3>Measure transfer</h3>
+          <p>Evaluate the fine-tuned model on downstream benchmarks as a proxy for data quality.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="benchmarks">
+    <div class="container">
+      <h2 class="section-title">Benchmarks</h2>
+      <p class="section-subtitle">The current public slice emphasizes retained tasks and retained metrics rather than every internal experiment. Each domain below contributes to the aggregate leaderboard.</p>
+      <div class="task-grid">
+        <div class="bench-card">
+          <div class="bench-tag">Law · 8 tasks</div>
+          <h3>Task-oriented legal understanding</h3>
+          <p>The law slice covers legal concept understanding, rule judgment, rule conflict settings, information extraction, subdomain identification, clause understanding, and common-sense legal recognition.</p>
+          <div class="pill-row">
+            <span class="pill">abercrombie</span>
+            <span class="pill">hearsay</span>
+            <span class="pill">personal_jurisdiction</span>
+            <span class="pill">ledgar</span>
+          </div>
+        </div>
+        <div class="bench-card">
+          <div class="bench-tag">Medicine · 15 metrics</div>
+          <h3>Clinical reasoning and medical coverage</h3>
+          <p>The medical slice combines diagnosis accuracy, reasoning recall, oracle diagnosis accuracy, body-system recognition, disorder coverage, and disease-family performance across multiple clinical categories.</p>
+          <div class="pill-row">
+            <span class="pill">MedCaseReasoning</span>
+            <span class="pill">oracle_diagnose</span>
+            <span class="pill">Macro body</span>
+            <span class="pill">Macro disorder</span>
+          </div>
+        </div>
+        <div class="bench-card">
+          <div class="bench-tag">Finance · 3 metrics</div>
+          <h3>Skill mastery and statement verification</h3>
+          <p>The finance slice includes CPA skill mastery, FinEval concept mastery, and XFinBench statement judgment. Together they reflect both fine-grained financial knowledge and broader statement-level reasoning.</p>
+          <div class="pill-row">
+            <span class="pill">CPA</span>
+            <span class="pill">FinEval</span>
+            <span class="pill">XFinBench</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="results">
+    <div class="container">
+      <h2 class="section-title">Detailed Results</h2>
+      <p class="section-subtitle">The landing page shows the aggregate view first. Full task-level results are still available below and can be switched by domain.</p>
+      <div class="panel">
+        <div class="controls">
+          <button class="tab-btn active" data-domain="law">Law</button>
+          <button class="tab-btn" data-domain="medicine">Medicine</button>
+          <button class="tab-btn" data-domain="finance">Finance</button>
+        </div>
+        <div class="leaderboard-table">
+          <table id="detail-table"></table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="observations">
+    <div class="container">
+      <h2 class="section-title">Observations</h2>
+      <div class="observations-grid">
+        <div class="observation-card">
+          <div class="obs-index">01</div>
+          <h4>Simple prompting is stronger overall</h4>
+          <p>Across Claude, Gemini, and GPT-5.2, the simple prompting variant outperforms the detailed prompting variant on the current public aggregate.</p>
+        </div>
+        <div class="observation-card">
+          <div class="obs-index">02</div>
+          <h4>Gemini Simple leads the current public slice</h4>
+          <p>Gemini Simple + Dolly ranks first overall and is also the strongest public configuration in medicine and finance.</p>
+        </div>
+        <div class="observation-card">
+          <div class="obs-index">03</div>
+          <h4>Law shows the highest ceiling</h4>
+          <p>The strongest public law score is higher than the strongest public scores in medicine and finance, suggesting that cross-domain transfer difficulty is not uniform.</p>
+        </div>
+        <div class="observation-card">
+          <div class="obs-index">04</div>
+          <h4>The baseline remains competitive</h4>
+          <p>Qwen + Dolly remains a meaningful baseline, particularly in medicine and finance, rather than serving as a weak reference point.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <h2 class="section-title">Artifact</h2>
+      <div class="grid-2">
+        <div class="setup-box">
+          <p><strong>Text2QA Builder</strong> is the engineering artifact behind the pipeline. It converts long markdown books into reusable supervision data, including concept QA, process QA, and case-application supervision.</p>
+        </div>
+        <div class="setup-box">
+          <p><strong>Outputs</strong></p>
+          <p class="mono">supervision_batches<br>chunk_status.jsonl<br>supervision_merged.jsonl<br>validation.json<br>coverage.json</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="citation">
+    <div class="container">
+      <h2 class="section-title">Citation</h2>
+      <p class="section-subtitle">Citation information will be updated once the paper is released. A temporary placeholder is provided below for the project page.</p>
+      <div class="citation-box">
+        <pre class="citation-text" id="citation-text">@misc{data_preparation_bench_2026,
+  title        = {Data Preparation Bench},
+  howpublished = {Project page},
+  year         = {2026},
+  note         = {Paper coming soon},
+  url          = {https://github.com/TechNomad-ds/text2qa-builder}
+}</pre>
+        <button class="copy-btn" id="copy-citation">Copy</button>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div>Data Preparation Bench · public project page draft</div>
+      <div>GitHub · Paper coming soon</div>
+    </div>
+  </footer>
+
+  <script>
+    const chartText = () => getComputedStyle(document.documentElement).getPropertyValue('--text').trim();
+    const chartMuted = () => getComputedStyle(document.documentElement).getPropertyValue('--muted').trim();
+    const chartBorder = () => getComputedStyle(document.documentElement).getPropertyValue('--border').trim();
+
+    const methods = [
+      {
+        id: 'qwen-dolly',
+        label: 'Qwen + Dolly',
+        law: [0.3895,0.711,0.5616,0.3102,0.9024,0.2679,0.3856,0.9565],
+        medicine: [0.1494,0.3492,0.604,0.5976,0.5031,0.5962,0.619,0.6364,0.5766,0.5542,0.6811,0.6336,0.5598,0.5851,0.4561],
+        finance: ['48.57%','52.48%',0.5448]
+      },
+      {
+        id: 'law-claude-detiled-dolly',
+        label: 'Claude Detailed + Dolly',
+        law: [0.3474,0.5787,0.4943,0.6912,0.8875,0.292,0.1908,0.871],
+        medicine: [0.1773,0.3204,0.4775,0.4605,0.4167,0.5,0.5442,0.4924,0.4595,0.4217,0.5282,0.4698,0.4348,0.5213,0.4035],
+        finance: ['41.43%','40.59%',0.5333]
+      },
+      {
+        id: 'law-claude-simply-dolly',
+        label: 'Claude Simple + Dolly',
+        law: [0.4421,0.7105,0.5049,0.65,0.9512,0.2633,0.234,0.9676],
+        medicine: [0.1661,0.2199,0.5434,0.5392,0.437,0.5128,0.5782,0.5985,0.5405,0.5301,0.6213,0.5474,0.4891,0.5638,0.4211],
+        finance: ['32.38%','39.60%',0.5379]
+      },
+      {
+        id: 'law-gemini-detiled-dolly',
+        label: 'Gemini Detailed + Dolly',
+        law: [0.2526,0.6413,0.5181,0.6282,0.8774,0.2678,0.3108,0.9731],
+        medicine: [0.1806,0.3253,0.5643,0.5638,0.4906,0.5641,0.551,0.6212,0.5405,0.4578,0.6279,0.5647,0.538,0.5638,0.4386],
+        finance: ['46.67%','42.57%',0.4897]
+      },
+      {
+        id: 'law-gemini-simply-dolly',
+        label: 'Gemini Simple + Dolly',
+        law: [0.4737,0.5732,0.5681,0.356,0.9018,0.2812,0.5092,0.8759],
+        medicine: [0.1583,0.4158,0.6343,0.6362,0.5199,0.6538,0.7007,0.5909,0.5946,0.5663,0.7375,0.6422,0.587,0.6064,0.4912],
+        finance: ['53.33%','52.48%',0.554]
+      },
+      {
+        id: 'law-gpt5.2-detiled-dolly',
+        label: 'GPT-5.2 Detailed + Dolly',
+        law: [0.4421,0.6468,0.4704,0.669,0.7158,0.2705,0.2656,0.9241],
+        medicine: [0.1472,0.1808,0.5789,0.61,0.4239,0.5192,0.5714,0.5985,0.6486,0.494,0.6678,0.5776,0.5543,0.5426,0.5263],
+        finance: ['39.52%','43.56%',0.5425]
+      },
+      {
+        id: 'law-gpt5.2-simply-dolly',
+        label: 'GPT-5.2 Simple + Dolly',
+        law: [0.4632,0.5803,0.6675,0.4574,0.9146,0.26,0.408,0.8897],
+        medicine: [0.1472,0.2144,0.5904,0.6005,0.4946,0.5705,0.6259,0.5758,0.5495,0.5181,0.6645,0.5733,0.5272,0.5532,0.6316],
+        finance: ['39.05%','39.60%',0.5103]
+      }
+    ];
+
+    const lawHeaders = ['Method','abercrombie','hearsay','personal_jurisdiction','ucc_v_common_law','contract_qa','eurlex','ledgar','unfair_tos'];
+    const medicineHeaders = ['Method','MCR-acc','MCR-recall','oracle_diagnose','Macro body','Macro disorder','Brain','Digestive','Musculoskeletal','Cardiovascular','Respiratory','Cancer','Infection','Genetics','Injury','Metabolic'];
+    const financeHeaders = ['Method','CPA','FinEval','XFinBench'];
+
+    function parseMaybePercent(v) {
+      return typeof v === 'string' && v.endsWith('%') ? parseFloat(v) / 100 : Number(v);
+    }
+    function avg(arr) {
+      return arr.reduce((a, b) => a + b, 0) / arr.length;
+    }
+    function fmt(v) {
+      if (typeof v === 'string') return v;
+      return Number(v).toFixed(4);
+    }
+
+    const summary = methods.map(m => {
+      const law = avg(m.law);
+      const medicine = avg(m.medicine);
+      const finance = avg(m.finance.map(parseMaybePercent));
+      const overall = avg([law, medicine, finance]);
+      return { ...m, lawAvg: law, medicineAvg: medicine, financeAvg: finance, overall };
+    }).sort((a, b) => b.overall - a.overall);
+
+    function renderLeaderboard() {
+      const tbody = document.getElementById('leaderboard-data');
+      tbody.innerHTML = summary.map((row, idx) => `
+        <tr>
+          <td><span class="rank-badge">${idx + 1}</span></td>
+          <td>${row.label}</td>
+          <td class="score-strong">${row.overall.toFixed(4)}</td>
+          <td>${row.lawAvg.toFixed(4)}</td>
+          <td>${row.medicineAvg.toFixed(4)}</td>
+          <td>${row.financeAvg.toFixed(4)}</td>
+        </tr>
+      `).join('');
+    }
+
+    function renderDetail(domain) {
+      const table = document.getElementById('detail-table');
+      let headers = [];
+      let rows = [];
+      if (domain === 'law') {
+        headers = lawHeaders;
+        rows = methods.map(m => [m.label, ...m.law]);
+      } else if (domain === 'medicine') {
+        headers = medicineHeaders;
+        rows = methods.map(m => [m.label, ...m.medicine]);
+      } else {
+        headers = financeHeaders;
+        rows = methods.map(m => [m.label, ...m.finance]);
+      }
+      table.innerHTML = `
+        <thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead>
+        <tbody>${rows.map(r => `<tr>${r.map(c => `<td>${fmt(c)}</td>`).join('')}</tr>`).join('')}</tbody>
+      `;
+    }
+
+    let overallChart, domainChart;
+
+    function chartCommon() {
+      return {
+        color: chartText(),
+        grid: chartBorder(),
+        muted: chartMuted()
+      };
+    }
+
+    function buildCharts() {
+      if (overallChart) overallChart.destroy();
+      if (domainChart) domainChart.destroy();
+
+      const colors = chartCommon();
+      overallChart = new Chart(document.getElementById('overallChart'), {
+        type: 'bar',
+        data: {
+          labels: summary.map(d => d.label),
+          datasets: [{
+            label: 'Overall',
+            data: summary.map(d => d.overall),
+            backgroundColor: summary.map((_, i) => i === 0 ? '#2563eb' : '#9ab8ff'),
+            borderRadius: 8,
+            barThickness: 22
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: {
+              min: 0.35,
+              max: 0.60,
+              ticks: { color: colors.muted },
+              grid: { color: colors.grid }
+            },
+            y: {
+              ticks: { color: colors.color },
+              grid: { display: false }
+            }
+          }
+        }
+      });
+
+      domainChart = new Chart(document.getElementById('domainChart'), {
+        type: 'bar',
+        data: {
+          labels: summary.map(d => d.label),
+          datasets: [
+            { label: 'Law', data: summary.map(d => d.lawAvg), backgroundColor: '#2563eb', borderRadius: 6 },
+            { label: 'Medicine', data: summary.map(d => d.medicineAvg), backgroundColor: '#6fa0ff', borderRadius: 6 },
+            { label: 'Finance', data: summary.map(d => d.financeAvg), backgroundColor: '#b6d0ff', borderRadius: 6 }
+          ]
+        },
+        options: {
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              labels: { color: colors.color }
+            }
+          },
+          scales: {
+            x: {
+              ticks: { color: colors.muted, maxRotation: 35, minRotation: 35 },
+              grid: { display: false }
+            },
+            y: {
+              min: 0.35,
+              max: 0.65,
+              ticks: { color: colors.muted },
+              grid: { color: colors.grid }
+            }
+          }
+        }
+      });
+    }
+
+    renderLeaderboard();
+    renderDetail('law');
+    buildCharts();
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderDetail(btn.dataset.domain);
+      });
+    });
+
+    const hamburgerBtn = document.getElementById('hamburger-btn');
+    const navLinks = document.getElementById('nav-links');
+    hamburgerBtn?.addEventListener('click', () => navLinks.classList.toggle('open'));
+
+    const html = document.documentElement;
+    const savedTheme = localStorage.getItem('dpb-theme');
+    if (savedTheme) html.setAttribute('data-theme', savedTheme);
+    document.getElementById('theme-toggle').addEventListener('click', () => {
+      const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+      localStorage.setItem('dpb-theme', next);
+      buildCharts();
+    });
+
+    document.getElementById('copy-citation').addEventListener('click', async () => {
+      const text = document.getElementById('citation-text').innerText;
+      try {
+        await navigator.clipboard.writeText(text);
+        document.getElementById('copy-citation').innerText = 'Copied';
+        setTimeout(() => document.getElementById('copy-citation').innerText = 'Copy', 1200);
+      } catch (e) {
+        document.getElementById('copy-citation').innerText = 'Copy failed';
+        setTimeout(() => document.getElementById('copy-citation').innerText = 'Copy', 1200);
+      }
+    });
+  </script>
+</body>
+</html>
