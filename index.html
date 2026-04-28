@@ -1,998 +1,1665 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Data Preparation Bench</title>
-  <meta name="description" content="Measuring how well agents construct supervision data from long-form domain books." />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=PT+Mono&family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <meta charset="utf-8">
+  <meta name="description" content="DataPrep-Bench: Benchmarking LLMs as Training Data Preparators.">
+  <meta name="keywords" content="DataPrep-Bench, LLM-driven Data Preparation, Data Construction, Data Quality Evaluation, Data-Construction-Skill, Distributional Alignment Score, DAS, MMD">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DataPrep-Bench</title>
+
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
   <style>
     :root {
-      --bg: #fbfcff;
-      --bg-soft: #f4f7fb;
-      --panel: #ffffff;
-      --text: #101828;
-      --muted: #667085;
-      --border: #e4e7ec;
-      --border-strong: #d0d5dd;
-      --accent: #2563eb;
-      --accent-soft: #eaf1ff;
-      --shadow: 0 12px 28px rgba(16, 24, 40, 0.06);
-      --radius: 20px;
-      --max-width: 1180px;
+      --primary: #1f5f8b;
+      --primary-dark: #123d64;
+      --primary-soft: #eef7fd;
+      --accent: #36a77a;
+      --accent-soft: #edf9f3;
+      --warning-soft: #fff7e6;
+      --ink: #18212f;
+      --muted: #64748b;
+      --line: #e5eaf1;
+      --paper: #ffffff;
+      --bg: #fbfcfe;
+      --soft-blue: #f4f9ff;
+      --shadow: 0 12px 36px rgba(15, 23, 42, 0.06);
     }
 
-    html[data-theme="dark"] {
-      --bg: #0b1220;
-      --bg-soft: #0f172a;
-      --panel: #111b2f;
-      --text: #e8eef8;
-      --muted: #9fb0c9;
-      --border: #20304a;
-      --border-strong: #2e4366;
-      --accent: #79a8ff;
-      --accent-soft: rgba(121, 168, 255, 0.12);
-      --shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
-    }
-
-    * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
-    body {
-      margin: 0;
+    html {
+      scroll-behavior: smooth;
       background: var(--bg);
-      color: var(--text);
-      font-family: Inter, system-ui, sans-serif;
-      line-height: 1.6;
     }
-    a { color: inherit; text-decoration: none; }
-    .container { width: min(calc(100% - 32px), var(--max-width)); margin: 0 auto; }
-    .mono { font-family: "JetBrains Mono", monospace; }
+
+    body {
+      font-family: "Noto Sans", "Google Sans", Arial, sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+    }
+
+    a {
+      color: var(--primary);
+    }
+
+    a:hover {
+      color: var(--primary-dark);
+    }
 
     .navbar {
+      box-shadow: 0 1px 0 rgba(15, 23, 42, 0.06);
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(10px);
       position: sticky;
       top: 0;
-      z-index: 50;
-      backdrop-filter: blur(12px);
-      background: color-mix(in srgb, var(--bg) 92%, transparent);
-      border-bottom: 1px solid var(--border);
+      z-index: 20;
     }
-    .nav-content {
-      min-height: 72px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 18px;
+
+    .navbar-item {
+      font-size: 0.94rem;
+      color: #334155;
     }
-    .nav-left, .nav-right {
-      display: flex;
-      align-items: center;
-      gap: 14px;
+
+    .publication-title {
+      font-family: "Google Sans", "Noto Sans", sans-serif;
+      letter-spacing: -0.04em;
+      line-height: 1.05;
     }
-    .logo {
-      font-family: "Space Mono", monospace;
-      font-size: 1.15rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-    }
-    .logo-accent { color: var(--accent); }
-    .nav-links {
-      display: flex;
-      gap: 24px;
-      color: var(--muted);
-      font-size: 0.95rem;
-    }
-    .nav-links a:hover { color: var(--text); }
-    .theme-toggle, .nav-github, .hamburger {
-      border: 1px solid var(--border);
-      background: var(--panel);
-      color: var(--text);
-      height: 40px;
-      border-radius: 999px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: .18s ease;
-    }
-    .theme-toggle:hover, .nav-github:hover, .hamburger:hover {
-      transform: translateY(-1px);
-      box-shadow: var(--shadow);
-    }
-    .theme-toggle, .hamburger { width: 40px; }
-    .nav-github {
-      width: 40px;
-      padding: 0;
-    }
-    .hamburger {
-      display: none;
-      font-size: 1rem;
+
+    .title-gradient {
+      background: linear-gradient(90deg, #123d64, #1f5f8b, #36a77a);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
 
     .hero {
-      padding: 76px 0 34px;
-    }
-    .hero-title {
-      margin: 0;
-      font-family: "Space Mono", monospace;
-      font-size: clamp(2.7rem, 6vw, 4.9rem);
-      line-height: 1;
-      letter-spacing: -0.05em;
-    }
-    .title-accent { color: var(--accent); }
-    .hero-subtitle {
-      margin: 16px 0 0;
-      font-size: 1.18rem;
-      font-weight: 600;
-      max-width: 860px;
-    }
-    .hero-description {
-      max-width: 860px;
-      color: var(--muted);
-      margin-top: 14px;
-      font-size: 1rem;
-    }
-    .hero-buttons {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-top: 26px;
-    }
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      padding: 12px 18px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      font-weight: 700;
-      font-size: 0.95rem;
-      transition: .18s ease;
-      background: var(--panel);
-    }
-    .btn:hover { transform: translateY(-1px); box-shadow: var(--shadow); }
-    .btn-primary {
-      background: var(--text);
-      color: var(--bg);
-      border-color: var(--text);
-    }
-    .btn-secondary {
-      background: var(--panel);
-      color: var(--text);
-    }
-    .hero-kpis {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 14px;
-      margin-top: 32px;
-    }
-    .kpi {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 16px 18px;
-      box-shadow: var(--shadow);
-    }
-    .kpi-value {
-      font-size: 1.28rem;
-      font-weight: 800;
-      letter-spacing: -0.03em;
-    }
-    .kpi-label {
-      margin-top: 4px;
-      color: var(--muted);
-      font-size: 0.9rem;
+      background:
+        radial-gradient(circle at 10% 10%, rgba(31, 95, 139, 0.13), transparent 28%),
+        radial-gradient(circle at 88% 16%, rgba(54, 167, 122, 0.12), transparent 30%),
+        linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+      border-bottom: 1px solid var(--line);
     }
 
-    section {
-      padding: 40px 0;
+    .hero-body {
+      padding-top: 4.7rem;
+      padding-bottom: 3.7rem;
     }
+
+    .subtitle-compact {
+      max-width: 990px;
+      margin: 1.1rem auto 0 auto;
+      color: #475569;
+      line-height: 1.68;
+    }
+
+    .publication-authors {
+      margin-top: 1.15rem;
+      color: #334155;
+    }
+
+    .publication-authors .author-block {
+      display: inline-block;
+      margin: 0 0.12rem;
+    }
+
+    .affiliation-block {
+      display: inline-block;
+      margin: 0.15rem 0.35rem;
+      color: #475569;
+    }
+
+    .button.is-dark {
+      background: #172033;
+      border-color: #172033;
+      transition: all 0.18s ease;
+    }
+
+    .button.is-dark:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 9px 24px rgba(23, 32, 51, 0.16);
+    }
+
+    .link-block {
+      display: inline-block;
+      margin: 0.25rem;
+    }
+
+    .section {
+      padding-top: 3.9rem;
+      padding-bottom: 3.9rem;
+    }
+
     .section-title {
-      margin: 0 0 10px;
-      font-size: clamp(1.7rem, 3vw, 2.4rem);
-      line-height: 1.1;
-      letter-spacing: -0.04em;
-    }
-    .section-subtitle {
-      margin: 0 0 22px;
-      color: var(--muted);
-      max-width: 920px;
-    }
-    .section-subtitle.small {
-      margin-top: 18px;
-      font-size: 1.05rem;
-      color: var(--text);
-      font-weight: 700;
+      font-family: "Google Sans", "Noto Sans", sans-serif;
+      letter-spacing: -0.028em;
+      margin-bottom: 1.1rem !important;
     }
 
-    .leaderboard-chart,
-    .panel,
-    .bench-card,
-    .observation-card,
-    .citation-box,
-    .setup-box {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 22px;
-      box-shadow: var(--shadow);
-    }
-
-    .leaderboard-chart,
-    .panel,
-    .citation-box,
-    .setup-box {
-      padding: 22px;
-    }
-
-    .leaderboard-chart-wrapper {
-      height: 400px;
-      position: relative;
-    }
-    .leaderboard-chart-wrapper.short {
-      height: 340px;
-    }
-    .chart-footnote, .leaderboard-footnote {
-      color: var(--muted);
-      font-size: 0.9rem;
-      margin: 14px 0 0;
-    }
-
-    .leaderboard-table {
-      overflow-x: auto;
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      background: var(--panel);
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 760px;
-    }
-    th, td {
-      padding: 13px 14px;
-      border-bottom: 1px solid var(--border);
-      text-align: left;
-      white-space: nowrap;
-      font-size: 0.94rem;
-    }
-    th {
-      background: var(--bg-soft);
-      color: var(--muted);
-      font-weight: 700;
-    }
-    tbody tr:hover { background: var(--bg-soft); }
-    .rank-badge {
+    .section-kicker {
       display: inline-flex;
       align-items: center;
-      justify-content: center;
-      width: 32px;
-      height: 32px;
+      gap: 0.45rem;
+      color: var(--primary);
+      background: var(--primary-soft);
+      border: 1px solid rgba(31, 95, 139, 0.14);
       border-radius: 999px;
-      border: 1px solid var(--border);
-      background: var(--bg-soft);
-      font-weight: 700;
-    }
-    .score-strong { font-weight: 800; }
-
-    .controls {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-bottom: 16px;
-    }
-    .tab-btn {
-      border: 1px solid var(--border);
-      background: var(--panel);
-      color: var(--muted);
-      padding: 10px 14px;
-      border-radius: 999px;
-      cursor: pointer;
-      font-weight: 700;
-      font-size: 0.9rem;
-    }
-    .tab-btn.active {
-      background: var(--text);
-      border-color: var(--text);
-      color: var(--bg);
-    }
-
-    .pipeline {
-      display: grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
-      gap: 14px;
-    }
-    .pipeline-step {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 18px;
-      position: relative;
-    }
-    .step-index {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 30px;
-      height: 30px;
-      border-radius: 999px;
-      background: var(--accent-soft);
-      color: var(--accent);
+      padding: 0.35rem 0.75rem;
+      font-size: 0.84rem;
       font-weight: 800;
-      margin-bottom: 10px;
+      margin-bottom: 1rem;
     }
-    .pipeline-step h3 {
-      margin: 0 0 8px;
-      font-size: 1rem;
-      line-height: 1.25;
+
+    .content p {
+      line-height: 1.78;
+      color: #334155;
     }
-    .pipeline-step p {
-      margin: 0;
+
+    .lead {
+      font-size: 1.05rem;
+      line-height: 1.78;
+      color: #334155;
+    }
+
+    .paper-card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+      padding: 1.35rem;
+      height: 100%;
+    }
+
+    .paper-card h3,
+    .paper-card h4 {
+      color: #111827;
+      margin-bottom: 0.55rem;
+    }
+
+    .paper-card p {
+      color: #475569;
+      font-size: 0.98rem;
+      line-height: 1.65;
+    }
+
+    .icon-badge {
+      width: 2.55rem;
+      height: 2.55rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 14px;
+      background: var(--primary-soft);
+      color: var(--primary);
+      margin-bottom: 0.85rem;
+      font-size: 1.05rem;
+    }
+
+    .teaser-card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      padding: 1rem;
+    }
+
+    .teaser-card img {
+      width: 100%;
+      display: block;
+      border-radius: 12px;
+      border: 1px solid #e9eef5;
+      background: #f8fafc;
+    }
+
+    .caption {
       color: var(--muted);
-      font-size: 0.94rem;
+      font-size: 0.92rem;
+      margin-top: 0.85rem;
+      line-height: 1.55;
     }
-    .pipeline-step::after {
+
+    .stat-strip {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .stat-item {
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 1rem;
+      text-align: center;
+      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.03);
+    }
+
+    .stat-number {
+      font-family: "Google Sans", "Noto Sans", sans-serif;
+      color: var(--primary);
+      font-weight: 900;
+      font-size: 1.75rem;
+      line-height: 1.1;
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 0.88rem;
+      margin-top: 0.35rem;
+    }
+
+    .method-flow {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1rem;
+      margin-top: 1.4rem;
+    }
+
+    .flow-step {
+      border: 1px solid var(--line);
+      background: #ffffff;
+      border-radius: 18px;
+      padding: 1.25rem;
+      text-align: left;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .flow-step::after {
       content: "";
       position: absolute;
-      top: 50%;
-      right: -8px;
-      width: 16px;
-      height: 1px;
-      background: var(--border-strong);
-    }
-    .pipeline-step:last-child::after { display: none; }
-
-    .grid-2, .grid-3, .observations-grid, .task-grid {
-      display: grid;
-      gap: 18px;
-    }
-    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .grid-3, .task-grid, .observations-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-
-    .bench-card, .observation-card {
-      padding: 20px;
-    }
-    .bench-tag {
-      display: inline-flex;
-      padding: 6px 10px;
+      right: -24px;
+      top: -24px;
+      width: 76px;
+      height: 76px;
       border-radius: 999px;
-      border: 1px solid var(--border);
-      background: var(--bg-soft);
-      color: var(--muted);
-      font-size: 0.8rem;
-      font-weight: 700;
-      margin-bottom: 12px;
+      background: rgba(31, 95, 139, 0.07);
     }
-    .bench-card h3, .observation-card h4 {
-      margin: 0 0 8px;
-      font-size: 1.02rem;
-      line-height: 1.3;
+
+    .flow-step .step-index {
+      color: var(--primary);
+      font-weight: 800;
+      font-size: 0.84rem;
+      margin-bottom: 0.4rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
     }
-    .bench-card p, .observation-card p, .setup-box p {
-      margin: 0;
-      color: var(--muted);
+
+    .flow-step p {
+      color: #475569;
+      line-height: 1.65;
       font-size: 0.95rem;
     }
-    .pill-row {
+
+    .tag-soft {
+      display: inline-block;
+      background: var(--primary-soft);
+      color: var(--primary);
+      border-radius: 999px;
+      padding: 0.28rem 0.7rem;
+      font-size: 0.82rem;
+      font-weight: 800;
+      margin: 0.16rem;
+    }
+
+    .tag-accent {
+      background: var(--accent-soft);
+      color: #18845c;
+    }
+
+    .mini-list {
+      margin-top: 0.75rem;
+      color: #475569;
+      line-height: 1.75;
+    }
+
+    .mini-list li {
+      margin-bottom: 0.25rem;
+    }
+
+    .table-card {
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.045);
+      padding: 1rem;
+      margin-top: 1.2rem;
+      overflow: hidden;
+    }
+
+    .table-header {
       display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 14px;
-    }
-    .pill {
-      padding: 6px 10px;
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      background: var(--bg-soft);
-      color: var(--muted);
-      font-size: 0.8rem;
-      font-weight: 700;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.35rem 0.25rem 1rem 0.25rem;
+      border-bottom: 1px solid #edf2f7;
+      margin-bottom: 0.8rem;
     }
 
-    .setup-box ul {
-      margin: 14px 0 0;
-      padding-left: 18px;
-      color: var(--muted);
-    }
-    .setup-box li + li { margin-top: 8px; }
-
-    .observation-card .obs-index {
-      color: var(--accent);
-      font-family: "JetBrains Mono", monospace;
-      font-size: 1rem;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-
-    .citation-box {
-      position: relative;
-    }
-    .citation-text {
+    .table-header h4 {
       margin: 0;
-      overflow: auto;
-      white-space: pre-wrap;
-      font-family: "JetBrains Mono", monospace;
-      color: var(--muted);
-      font-size: 0.9rem;
-      line-height: 1.7;
     }
-    .copy-btn {
-      position: absolute;
-      top: 18px;
-      right: 18px;
-      border: 1px solid var(--border);
-      background: var(--panel);
-      color: var(--text);
-      border-radius: 999px;
-      padding: 8px 12px;
-      cursor: pointer;
+
+    .table-header p {
+      margin: 0.25rem 0 0 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+
+    .table-container {
+      overflow-x: auto;
+      border-radius: 14px;
+    }
+
+    .nice-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 0.9rem;
+      min-width: 980px;
+    }
+
+    .nice-table.compact {
+      min-width: 760px;
+    }
+
+    .nice-table.wide {
+      min-width: 1380px;
+    }
+
+    .nice-table.extra-wide {
+      min-width: 1900px;
+    }
+
+    .nice-table th {
+      background: #f4f8fc;
+      color: #1e3a56;
+      font-weight: 800;
+      text-align: center;
+      border-bottom: 1px solid #dce8f3;
+      padding: 0.72rem 0.58rem;
+      white-space: nowrap;
+    }
+
+    .nice-table td {
+      border-bottom: 1px solid #edf2f7;
+      padding: 0.66rem 0.58rem;
+      text-align: center;
+      color: #334155;
+      white-space: nowrap;
+    }
+
+    .nice-table td:first-child,
+    .nice-table th:first-child {
+      text-align: left;
+      position: sticky;
+      left: 0;
+      background: inherit;
+      z-index: 2;
+      box-shadow: 1px 0 0 #edf2f7;
+    }
+
+    .nice-table thead th:first-child {
+      background: #f4f8fc;
+      z-index: 3;
+    }
+
+    .nice-table tbody tr:hover td {
+      background: #fbfdff;
+    }
+
+    .nice-table .group-row td {
+      background: #eaf4fb;
+      color: #1f5f8b;
+      font-weight: 800;
+      text-align: center;
+      letter-spacing: 0.02em;
+    }
+
+    .best {
+      font-weight: 900;
+      color: #17663f !important;
+      background: #eaf8f0 !important;
+      border-radius: 8px;
+    }
+
+    .second {
+      font-weight: 800;
+      color: #8a5b00 !important;
+      background: #fff7e6 !important;
+      border-radius: 8px;
+    }
+
+    .muted-cell {
+      color: #94a3b8 !important;
+    }
+
+    .negative {
+      color: #17663f !important;
+      background: #edf9f3 !important;
       font-weight: 700;
+    }
+
+    .positive {
+      color: #9a5a00 !important;
+      background: #fff7e6 !important;
+      font-weight: 700;
+    }
+
+    .small-note {
+      color: var(--muted);
+      font-size: 0.86rem;
+      line-height: 1.55;
+      margin-top: 0.75rem;
+    }
+
+    details.result-details {
+      margin-top: 1.3rem;
+    }
+
+    details.result-details summary {
+      cursor: pointer;
+      list-style: none;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: linear-gradient(180deg, #ffffff, #f8fbff);
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.035);
+      padding: 1rem 1.2rem;
+      font-weight: 800;
+      color: #1e3a56;
+    }
+
+    details.result-details summary::-webkit-details-marker {
+      display: none;
+    }
+
+    details.result-details summary::after {
+      content: "＋";
+      float: right;
+      color: var(--primary);
+    }
+
+    details.result-details[open] summary::after {
+      content: "－";
+    }
+
+    .finding-card {
+      border-left: 4px solid var(--primary);
+    }
+
+    .bibtex {
+      background: #111827;
+      color: #e5e7eb;
+      border-radius: 14px;
+      padding: 1.2rem;
+      overflow-x: auto;
+      font-size: 0.9rem;
     }
 
     .footer {
-      padding: 30px 0 42px;
-      border-top: 1px solid var(--border);
-      color: var(--muted);
+      background: #ffffff;
+      border-top: 1px solid var(--line);
+      padding: 2.6rem 1.5rem;
+    }
+
+    .footer p {
+      color: #64748b;
       font-size: 0.92rem;
-      margin-top: 12px;
-    }
-    .footer-inner {
-      display: flex;
-      justify-content: space-between;
-      gap: 20px;
-      flex-wrap: wrap;
     }
 
-    @media (max-width: 1080px) {
-      .hero-kpis,
-      .grid-3,
-      .task-grid,
-      .observations-grid,
-      .pipeline {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+    @media screen and (max-width: 768px) {
+      .hero-body {
+        padding-top: 3rem;
       }
-      .pipeline-step:nth-child(2n)::after { display: none; }
-    }
 
-    @media (max-width: 760px) {
-      .hamburger { display: inline-flex; }
-      .nav-links {
-        display: none;
-        position: absolute;
-        top: 72px;
-        left: 16px;
-        right: 16px;
-        padding: 16px;
-        border: 1px solid var(--border);
-        border-radius: 16px;
-        background: var(--panel);
-        box-shadow: var(--shadow);
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 14px;
+      .title.is-1 {
+        font-size: 2.25rem;
       }
-      .nav-links.open { display: flex; }
-      .hero-kpis,
-      .grid-2,
-      .grid-3,
-      .task-grid,
-      .observations-grid,
-      .pipeline {
+
+      .stat-strip,
+      .method-flow {
         grid-template-columns: 1fr;
       }
-      .pipeline-step::after { display: none; }
-      .leaderboard-chart-wrapper,
-      .leaderboard-chart-wrapper.short {
-        height: 300px;
+
+      .section {
+        padding-top: 2.8rem;
+        padding-bottom: 2.8rem;
       }
-      .hero-title { font-size: 2.8rem; }
+
+      .table-header {
+        display: block;
+      }
     }
   </style>
 </head>
+
 <body>
-  <nav class="navbar">
-    <div class="container nav-content">
-      <div class="nav-left">
-        <button class="hamburger" id="hamburger-btn" aria-label="Toggle menu">☰</button>
-        <div class="logo">Data Preparation<span class="logo-accent">Bench</span></div>
-      </div>
-      <div class="nav-right">
-        <div class="nav-links" id="nav-links">
-          <a href="#leaderboard">Leaderboard</a>
-          <a href="#about">About</a>
-          <a href="#benchmarks">Benchmarks</a>
-          <a href="#observations">Observations</a>
-          <a href="#citation">Citation</a>
-        </div>
-        <a href="https://github.com/TechNomad-ds/text2qa-builder" target="_blank" rel="noopener" class="nav-github" aria-label="GitHub">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"></path>
-          </svg>
-        </a>
-        <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme">◐</button>
+  <nav class="navbar" role="navigation" aria-label="main navigation">
+    <div class="navbar-brand">
+      <a class="navbar-item" href="#top" aria-label="home">
+        <span class="icon"><i class="fas fa-home"></i></span>
+      </a>
+      <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="main-navbar">
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+      </a>
+    </div>
+
+    <div id="main-navbar" class="navbar-menu">
+      <div class="navbar-start" style="flex-grow: 1; justify-content: center;">
+        <a class="navbar-item" href="#background">Background</a>
+        <a class="navbar-item" href="#benchmark">Benchmark</a>
+        <a class="navbar-item" href="#evaluation">Evaluation</a>
+        <a class="navbar-item" href="#methods">Methods</a>
+        <a class="navbar-item" href="#results">Results</a>
+        <a class="navbar-item" href="#bibtex">BibTeX</a>
       </div>
     </div>
   </nav>
 
-  <section class="hero">
-    <div class="container">
-      <h1 class="hero-title">
-        <span class="title-main">Data Preparation</span><span class="title-accent">Bench</span>
-      </h1>
-      <p class="hero-subtitle">Measuring how well AI agents construct supervision data from long-form domain books</p>
-      <div class="hero-description">
-        <p>Can AI agents turn textbooks and reference books into useful SFT data? Data Preparation Bench studies this question by asking agents to generate instruction-response supervision from domain books, fine-tune a base model on the resulting data, and evaluate transfer on downstream benchmarks in law, medicine, and finance.</p>
-      </div>
-      <div class="hero-buttons">
-        <a href="#leaderboard" class="btn btn-primary">Explore Results</a>
-        <a href="https://github.com/TechNomad-ds/text2qa-builder" target="_blank" rel="noopener" class="btn btn-secondary">GitHub</a>
-      </div>
-      <div class="hero-kpis">
-        <div class="kpi"><div class="kpi-value">3</div><div class="kpi-label">Domains</div></div>
-        <div class="kpi"><div class="kpi-value">26</div><div class="kpi-label">Public metrics</div></div>
-        <div class="kpi"><div class="kpi-value">7</div><div class="kpi-label">Configurations</div></div>
-        <div class="kpi"><div class="kpi-value">Soon</div><div class="kpi-label">Paper release</div></div>
-      </div>
-    </div>
-  </section>
+  <section class="hero" id="top">
+    <div class="hero-body">
+      <div class="container is-max-desktop has-text-centered">
+        <h1 class="title is-1 publication-title is-bold">
+          <span class="title-gradient" style="font-variant: small-caps;">DataPrep-Bench</span>
+        </h1>
+        <h2 class="title is-3 publication-title" style="font-weight: 500; color: #334155;">
+          Benchmarking LLMs as Training Data Preparators
+        </h2>
 
-  <section id="leaderboard">
-    <div class="container">
-      <h2 class="section-title">Leaderboard</h2>
-      <div class="leaderboard-chart">
-        <div class="leaderboard-chart-wrapper">
-          <canvas id="overallChart"></canvas>
-        </div>
-        <p class="chart-footnote"><sup>1</sup> The public overall score is computed as the average of three domain-normalized scores: law, medicine, and finance. Within each domain, the released score is the unweighted average over the public task metrics shown on this page. Finance percentages are normalized to the [0, 1] range before aggregation.</p>
-        <p class="chart-footnote"><sup>2</sup> This page reflects the current public slice only. Additional evaluation modules and the paper will be added in a later release.</p>
-      </div>
+        <p class="subtitle-compact is-size-5">
+          A unified benchmark for evaluating whether LLMs, agents, data workflows, and scoring functions can prepare
+          training data that actually improves downstream model performance.
+        </p>
 
-      <div class="panel" style="margin-top:18px;">
-        <div class="leaderboard-table">
-          <table>
-            <thead>
-              <tr>
-                <th>Rank</th>
-                <th>Method</th>
-                <th>Avg</th>
-                <th>Law</th>
-                <th>Medicine</th>
-                <th>Finance</th>
-              </tr>
-            </thead>
-            <tbody id="leaderboard-data"></tbody>
-          </table>
+        <div class="is-size-5 publication-authors">
+          <span class="author-block"><a href="#">Hao Liang</a><sup>*†</sup>,</span>
+          <span class="author-block"><a href="#">Qifeng Cai</a><sup>*</sup>,</span>
+          <span class="author-block"><a href="#">Yibo Lin</a><sup>*</sup>,</span>
+          <span class="author-block"><a href="#">Jianzhuo Du</a><sup>*</sup>,</span>
+          <span class="author-block"><a href="#">Qifeng Xia</a>,</span>
+          <span class="author-block"><a href="#">Sizhe Qiu</a>,</span>
+          <span class="author-block"><a href="#">Linzhuang Sun</a>,</span>
+          <span class="author-block"><a href="#">Meiyi Qiang</a>,</span>
+          <span class="author-block"><a href="#">Zhaoyang Han</a>,</span>
+          <span class="author-block"><a href="#">Xiaochen Ma</a>,</span>
+          <span class="author-block"><a href="#">Bohan Zeng</a>,</span>
+          <span class="author-block"><a href="#">Ruichuan An</a>,</span>
+          <span class="author-block"><a href="#">Conghui He</a>,</span>
+          <span class="author-block"><a href="#">Weinan E</a>,</span>
+          <span class="author-block"><a href="#">Wentao Zhang</a><sup>‡</sup></span>
         </div>
-        <p class="leaderboard-footnote"><sup>*</sup> Finance values are aggregated from CPA, FinEval, and XFinBench. One finance source entry was provided as <span class="mono">0.533x3</span> and is rendered here as <span class="mono">0.5333</span> pending confirmation.</p>
-      </div>
 
-      <h3 class="section-subtitle small">Detailed Breakdown by Domain</h3>
-      <div class="leaderboard-chart">
-        <div class="leaderboard-chart-wrapper short">
-          <canvas id="domainChart"></canvas>
+        <div class="is-size-6 publication-authors" style="margin-top: 0.8rem;">
+          <span class="affiliation-block">Peking University</span>
+          <span class="affiliation-block">Institute for Advanced Algorithms Research, Shanghai</span>
+          <span class="affiliation-block">OriginHub Technology</span>
+          <span class="affiliation-block">Zhongguancun Academy</span>
         </div>
-      </div>
-    </div>
-  </section>
 
-  <section id="about">
-    <div class="container">
-      <h2 class="section-title">About</h2>
-      <div class="grid-2">
-        <div class="setup-box">
-          <p>Data Preparation Bench evaluates whether agents can build domain-grounded supervision data from books. The current release focuses on the <strong>QA generation</strong> side of the project: data is constructed from markdown books, used to fine-tune a base model, and then scored on downstream benchmarks to indirectly reflect data quality.</p>
-          <ul>
-            <li><strong>Knowledge sources:</strong> domain textbooks and reference books collected from broad-coverage ebook sources</li>
-            <li><strong>Domains:</strong> law, medicine, finance</li>
-            <li><strong>Base model:</strong> Qwen2.5-7B</li>
-            <li><strong>Instruction-following supplement:</strong> Dolly-15k</li>
-            <li><strong>Agent families:</strong> Claude, Gemini, GPT-5.2, plus Qwen baseline</li>
-          </ul>
+        <div class="is-size-7" style="margin-top: 0.6rem; color: #64748b;">
+          <span>* Equal contribution</span> &nbsp;·&nbsp;
+          <span>† Project leader</span> &nbsp;·&nbsp;
+          <span>‡ Corresponding author</span>
         </div>
-        <div class="setup-box">
-          <p><strong>Experimental setup</strong></p>
-          <ul>
-            <li>Books are converted from PDF to markdown before data construction.</li>
-            <li>Agents generate instruction-response QA pairs under simple or detailed prompts.</li>
-            <li>The resulting supervision is used for fine-tuning, then evaluated on public domain benchmarks.</li>
-            <li>For tasks that rely on string matching, an additional LLM-based review step can be applied to reduce false negatives.</li>
-          </ul>
+
+        <div class="publication-links" style="margin-top: 1.5rem;">
+          <span class="link-block">
+            <a href="#" class="external-link button is-normal is-rounded is-dark">
+              <span class="icon"><i class="fas fa-file-pdf"></i></span>
+              <span>Paper</span>
+            </a>
+          </span>
+          <span class="link-block">
+            <a href="https://github.com/haolpku/Data-Preparation-Bench" class="external-link button is-normal is-rounded is-dark">
+              <span class="icon"><i class="fab fa-github"></i></span>
+              <span>Code</span>
+            </a>
+          </span>
+          <span class="link-block">
+            <a href="https://huggingface.co/datasets/lhpku20010120/Data-Prep-Bench" class="external-link button is-normal is-rounded is-dark">
+              <span class="icon"><i class="fas fa-database"></i></span>
+              <span>Dataset & Demo</span>
+            </a>
+          </span>
+          <span class="link-block">
+            <a href="#results" class="external-link button is-normal is-rounded is-dark">
+              <span class="icon"><i class="fa fa-chart-line"></i></span>
+              <span>Results</span>
+            </a>
+          </span>
         </div>
       </div>
     </div>
   </section>
 
-  <section id="process-flow">
-    <div class="container">
-      <h2 class="section-title">Pipeline</h2>
-      <div class="pipeline">
-        <div class="pipeline-step">
-          <div class="step-index">1</div>
-          <h3>Collect books</h3>
-          <p>Gather domain textbooks and long-form reference material with broad topic coverage.</p>
+  <section class="section">
+    <div class="container is-max-desktop">
+      <div class="teaser-card">
+        <img src="./static/images/dataprep_framework.png" alt="Overall framework of DataPrep-Bench">
+        <p class="caption has-text-centered">
+          Overall framework of DataPrep-Bench. Replace this placeholder with the framework figure from the paper.
+        </p>
+      </div>
+
+      <div class="stat-strip">
+        <div class="stat-item">
+          <div class="stat-number">2</div>
+          <div class="stat-label">Complementary Tracks</div>
         </div>
-        <div class="pipeline-step">
-          <div class="step-index">2</div>
-          <h3>Convert to markdown</h3>
-          <p>Transform PDFs into markdown so agents can operate over clean machine-readable text.</p>
+        <div class="stat-item">
+          <div class="stat-number">6</div>
+          <div class="stat-label">Evaluation Domains</div>
         </div>
-        <div class="pipeline-step">
-          <div class="step-index">3</div>
-          <h3>Generate supervision</h3>
-          <p>Use agents to produce instruction-response QA under different prompting specifications.</p>
-        </div>
-        <div class="pipeline-step">
-          <div class="step-index">4</div>
-          <h3>Fine-tune base model</h3>
-          <p>Train a base model on the generated data, with Dolly added to strengthen instruction following.</p>
-        </div>
-        <div class="pipeline-step">
-          <div class="step-index">5</div>
-          <h3>Measure transfer</h3>
-          <p>Evaluate the fine-tuned model on downstream benchmarks as a proxy for data quality.</p>
+        <div class="stat-item">
+          <div class="stat-number">3</div>
+          <div class="stat-label">Base Model Families</div>
         </div>
       </div>
     </div>
   </section>
 
-  <section id="benchmarks">
-    <div class="container">
-      <h2 class="section-title">Benchmarks</h2>
-      <p class="section-subtitle">The current public slice emphasizes retained tasks and retained metrics rather than every internal experiment. Each domain below contributes to the aggregate leaderboard.</p>
-      <div class="task-grid">
-        <div class="bench-card">
-          <div class="bench-tag">Law · 8 tasks</div>
-          <h3>Task-oriented legal understanding</h3>
-          <p>The law slice covers legal concept understanding, rule judgment, rule conflict settings, information extraction, subdomain identification, clause understanding, and common-sense legal recognition.</p>
-          <div class="pill-row">
-            <span class="pill">abercrombie</span>
-            <span class="pill">hearsay</span>
-            <span class="pill">personal_jurisdiction</span>
-            <span class="pill">ledgar</span>
+  <section class="section" id="background">
+    <div class="container is-max-widescreen">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <span class="section-kicker"><i class="fas fa-seedling"></i> Motivation</span>
+          <h2 class="title is-3 section-title">Why Benchmark LLMs as Data Preparators?</h2>
+          <div class="content has-text-justified">
+            <p class="lead">
+              Training data is a primary driver of LLM capability. As high-quality natural corpora become increasingly
+              scarce, the community is turning to LLMs, agents, and data-centric workflows to produce and curate training
+              data. This raises a foundational question: <b>how well can these systems actually prepare training data
+              end to end?</b>
+            </p>
+            <p>
+              We study this emerging paradigm as <b>LLM-driven data preparation</b>, which consists of two capabilities:
+              <b>data construction</b>, which transforms raw or otherwise non-trainable sources into supervised training
+              data, and <b>data quality evaluation</b>, which predicts the training value of candidate datasets before
+              downstream fine-tuning.
+            </p>
+            <p>
+              Existing work has demonstrated that LLM-driven preparation is feasible, but evaluations are often isolated:
+              different studies use different sources, base models, training settings, and metrics. DataPrep-Bench closes
+              this gap with a unified testbed where agents, workflows, and metrics are compared under shared resources
+              and a common downstream-grounded protocol.
+            </p>
           </div>
         </div>
-        <div class="bench-card">
-          <div class="bench-tag">Medicine · 15 metrics</div>
-          <h3>Clinical reasoning and medical coverage</h3>
-          <p>The medical slice combines diagnosis accuracy, reasoning recall, oracle diagnosis accuracy, body-system recognition, disorder coverage, and disease-family performance across multiple clinical categories.</p>
-          <div class="pill-row">
-            <span class="pill">MedCaseReasoning</span>
-            <span class="pill">oracle_diagnose</span>
-            <span class="pill">Macro body</span>
-            <span class="pill">Macro disorder</span>
-          </div>
-        </div>
-        <div class="bench-card">
-          <div class="bench-tag">Finance · 3 metrics</div>
-          <h3>Skill mastery and statement verification</h3>
-          <p>The finance slice includes CPA skill mastery, FinEval concept mastery, and XFinBench statement judgment. Together they reflect both fine-grained financial knowledge and broader statement-level reasoning.</p>
-          <div class="pill-row">
-            <span class="pill">CPA</span>
-            <span class="pill">FinEval</span>
-            <span class="pill">XFinBench</span>
+      </div>
+
+      <div class="columns is-centered" style="margin-top: 1.4rem;">
+        <div class="column is-10">
+          <div class="paper-card">
+            <h3 class="title is-5">Core Question</h3>
+            <p>
+              Rather than asking whether generated data merely appears fluent, diverse, or clean, DataPrep-Bench asks
+              whether the prepared data leads to a better model after fine-tuning, and whether a metric can predict that
+              improvement before training is performed.
+            </p>
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  <section id="results">
-    <div class="container">
-      <h2 class="section-title">Detailed Results</h2>
-      <p class="section-subtitle">The landing page shows the aggregate view first. Full task-level results are still available below and can be switched by domain.</p>
-      <div class="panel">
-        <div class="controls">
-          <button class="tab-btn active" data-domain="law">Law</button>
-          <button class="tab-btn" data-domain="medicine">Medicine</button>
-          <button class="tab-btn" data-domain="finance">Finance</button>
+  <section class="section" id="benchmark">
+    <div class="container is-max-widescreen">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <span class="section-kicker"><i class="fas fa-layer-group"></i> Benchmark</span>
+          <h2 class="title is-3 section-title">DataPrep-Bench</h2>
+          <div class="content has-text-justified">
+            <p>
+              DataPrep-Bench is a comprehensive benchmark for LLM-driven training data preparation. It jointly evaluates
+              <b>Data Construction</b> and <b>Data Quality Evaluation</b> as first-class targets. Both tracks use
+              downstream model performance as the reference signal, enabling principled comparison of agents, workflows,
+              and data quality metrics.
+            </p>
+          </div>
         </div>
-        <div class="leaderboard-table">
-          <table id="detail-table"></table>
+      </div>
+
+      <div class="columns is-centered" style="margin-top: 1.5rem;">
+        <div class="column is-5">
+          <div class="paper-card">
+            <div class="icon-badge"><i class="fas fa-hammer"></i></div>
+            <h3 class="title is-4">Data Construction Track</h3>
+            <p>
+              Given raw domain sources such as books, technical manuals, or long-form knowledge materials, a construction
+              method must produce useful QA-style supervised fine-tuning data. The output is evaluated by fine-tuning
+              base models on the constructed dataset and measuring held-out domain benchmark performance.
+            </p>
+            <ul class="mini-list">
+              <li><b>Input:</b> raw Markdown-formatted domain sources.</li>
+              <li><b>Output:</b> supervised QA-style training data.</li>
+              <li><b>Evaluation:</b> downstream performance induced by the synthesized dataset.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="column is-5">
+          <div class="paper-card">
+            <div class="icon-badge"><i class="fas fa-magnifying-glass-chart"></i></div>
+            <h3 class="title is-4">Data Quality Evaluation Track</h3>
+            <p>
+              Given candidate training datasets, a scoring function assigns scalar quality scores before fine-tuning. The
+              metric is evaluated by whether its scores are linearly predictive of the empirical downstream utility of
+              models trained on the corresponding datasets.
+            </p>
+            <ul class="mini-list">
+              <li><b>Input:</b> candidate dataset pools and optional domain proxies.</li>
+              <li><b>Output:</b> scalar utility scores for candidate datasets.</li>
+              <li><b>Evaluation:</b> Pearson correlation with downstream performance.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="columns is-centered" style="margin-top: 1.25rem;">
+        <div class="column is-10">
+          <div class="paper-card has-text-centered">
+            <h3 class="title is-5">Domains and Evaluation Coverage</h3>
+            <div>
+              <span class="tag-soft">General Text</span>
+              <span class="tag-soft">Mathematical Reasoning</span>
+              <span class="tag-soft">Science</span>
+              <span class="tag-soft">Medical</span>
+              <span class="tag-soft">Finance</span>
+              <span class="tag-soft">Law</span>
+            </div>
+            <p style="margin-top: 1rem;">
+              DataPrep-Bench spans broad and specialized domains, with target benchmarks including MMLU-Redux, AIME,
+              AMC, GSM8K, MATH, MinervaMath, OlympiadBench, GPQA, SuperGPQA, ChemBench, MedMCQA,
+              MedR-Bench, XFinBench, LegalBench, and LexGLUE.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="columns is-centered" style="margin-top: 1.25rem;">
+        <div class="column is-10">
+          <div class="table-card">
+            <div class="table-header">
+              <div>
+                <h4 class="title is-5">Source Corpus</h4>
+                <p>Raw domain materials used as input for the Data Construction Track.</p>
+              </div>
+            </div>
+            <div class="table-container">
+              <table class="nice-table compact">
+                <thead>
+                  <tr>
+                    <th>Domain</th>
+                    <th>Source Materials</th>
+                    <th>Preprocessing</th>
+                    <th>Purpose</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><b>General Text</b></td>
+                    <td>FineWeb sample-10BT subset, sampled into Markdown files</td>
+                    <td>Randomly sampled 150 MB and organized into 100 Markdown files</td>
+                    <td>General instruction and language understanding</td>
+                  </tr>
+                  <tr>
+                    <td><b>Math</b></td>
+                    <td>Chinese university mathematics textbooks and competition materials</td>
+                    <td>Converted and normalized into Markdown</td>
+                    <td>Mathematical reasoning and problem solving</td>
+                  </tr>
+                  <tr>
+                    <td><b>Science</b></td>
+                    <td>Books from Wikibooks, FreeBookCentre, Open Textbook Library; IChO and IBO materials</td>
+                    <td>PDF-to-Markdown conversion with MinerU</td>
+                    <td>Physics, chemistry, biology, and scientific reasoning</td>
+                  </tr>
+                  <tr>
+                    <td><b>Medical</b></td>
+                    <td>Domain books and long-form medical knowledge materials</td>
+                    <td>PDF-to-Markdown conversion with MinerU</td>
+                    <td>Medical knowledge and clinical reasoning</td>
+                  </tr>
+                  <tr>
+                    <td><b>Finance</b></td>
+                    <td>Domain books and long-form financial knowledge materials</td>
+                    <td>PDF-to-Markdown conversion with MinerU</td>
+                    <td>Financial expertise and quantitative reasoning</td>
+                  </tr>
+                  <tr>
+                    <td><b>Law</b></td>
+                    <td>Domain books and long-form legal knowledge materials</td>
+                    <td>PDF-to-Markdown conversion with MinerU</td>
+                    <td>Legal knowledge and document-level reasoning</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="small-note">
+              All construction methods receive the same unified input format: folders of Markdown files containing raw
+              domain knowledge sources.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="columns is-centered" style="margin-top: 1.25rem;">
+        <div class="column is-10">
+          <div class="table-card">
+            <div class="table-header">
+              <div>
+                <h4 class="title is-5">Candidate Dataset Pools</h4>
+                <p>Proxy datasets and candidate pools used in the Data Quality Evaluation Track.</p>
+              </div>
+            </div>
+            <div class="table-container">
+              <table class="nice-table compact">
+                <thead>
+                  <tr>
+                    <th>Domain</th>
+                    <th>Proxy / Reference Dataset</th>
+                    <th>In-domain Candidate Dataset</th>
+                    <th>Out-domain Candidate Dataset</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><b>General</b></td>
+                    <td>Infinity-Instruct</td>
+                    <td>DataFlow-10k; WizardLM 196k; UltraChat; Tulu 3 SFT Mixture; Smoltalk Chinese; OpenHermes 2.5</td>
+                    <td>OpenR1-Math-220k; Synthetic-1; ScaleQuest; UltraMedical; Finance-Instruct-500k; MegaScience; Nemotron-Science-v1; Lawyer-Llama</td>
+                  </tr>
+                  <tr>
+                    <td><b>Math</b></td>
+                    <td>ODA-Math-460k</td>
+                    <td>OpenR1-Math-220k; Synthetic-1; ScaleQuest</td>
+                    <td>Infinity-Instruct; DataFlow-10k; WizardLM 196k; UltraChat; Tulu 3 SFT Mixture; Smoltalk Chinese; OpenHermes 2.5</td>
+                  </tr>
+                  <tr>
+                    <td><b>Science</b></td>
+                    <td>Logics-STEM</td>
+                    <td>MegaScience; Nemotron-Science-v1</td>
+                    <td>Infinity-Instruct; DataFlow-10k; WizardLM 196k; UltraChat; Tulu 3 SFT Mixture; Smoltalk Chinese; OpenHermes 2.5</td>
+                  </tr>
+                  <tr>
+                    <td><b>Medical</b></td>
+                    <td>ReasonMed</td>
+                    <td>UltraMedical</td>
+                    <td>Infinity-Instruct; DataFlow-10k; WizardLM 196k; UltraChat; Tulu 3 SFT Mixture; Smoltalk Chinese; OpenHermes 2.5</td>
+                  </tr>
+                  <tr>
+                    <td><b>Finance</b></td>
+                    <td>Fin-o1</td>
+                    <td>Finance-Instruct-500k</td>
+                    <td>Infinity-Instruct; DataFlow-10k; WizardLM 196k; UltraChat; Tulu 3 SFT Mixture; Smoltalk Chinese; OpenHermes 2.5</td>
+                  </tr>
+                  <tr>
+                    <td><b>Law</b></td>
+                    <td>DISC-Law-SFT</td>
+                    <td>Lawyer-Llama</td>
+                    <td>Infinity-Instruct; DataFlow-10k; WizardLM 196k; UltraChat; Tulu 3 SFT Mixture; Smoltalk Chinese; OpenHermes 2.5</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="small-note">
+              Proxy datasets are used only for metric computation and are kept separate from downstream benchmark test
+              sets to avoid evaluation leakage.
+            </p>
+          </div>
         </div>
       </div>
     </div>
   </section>
 
-  <section id="observations">
-    <div class="container">
-      <h2 class="section-title">Observations</h2>
-      <div class="observations-grid">
-        <div class="observation-card">
-          <div class="obs-index">01</div>
-          <h4>Simple prompting is stronger overall</h4>
-          <p>Across Claude, Gemini, and GPT-5.2, the simple prompting variant outperforms the detailed prompting variant on the current public aggregate.</p>
-        </div>
-        <div class="observation-card">
-          <div class="obs-index">02</div>
-          <h4>Gemini Simple leads the current public slice</h4>
-          <p>Gemini Simple + Dolly ranks first overall and is also the strongest public configuration in medicine and finance.</p>
-        </div>
-        <div class="observation-card">
-          <div class="obs-index">03</div>
-          <h4>Law shows the highest ceiling</h4>
-          <p>The strongest public law score is higher than the strongest public scores in medicine and finance, suggesting that cross-domain transfer difficulty is not uniform.</p>
-        </div>
-        <div class="observation-card">
-          <div class="obs-index">04</div>
-          <h4>The baseline remains competitive</h4>
-          <p>Qwen + Dolly remains a meaningful baseline, particularly in medicine and finance, rather than serving as a weak reference point.</p>
+  <section class="section" id="evaluation">
+    <div class="container is-max-widescreen">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <span class="section-kicker"><i class="fas fa-ruler-combined"></i> Protocol</span>
+          <h2 class="title is-3 section-title">Downstream-Grounded Evaluation</h2>
+          <div class="content has-text-justified">
+            <p>
+              DataPrep-Bench evaluates data preparation by its actual training utility. For each candidate supervised
+              fine-tuning dataset, a base model is fine-tuned under a shared training protocol and then evaluated on
+              held-out benchmarks from the corresponding domain. This design avoids relying on surface-level proxies such
+              as fluency, perplexity, or diversity alone.
+            </p>
+            <p>
+              In the Data Construction Track, the benchmark asks whether a construction method can transform raw domain
+              materials into training data that improves a downstream model. In the Data Quality Evaluation Track, the
+              benchmark asks whether a scoring function can predict which candidate datasets will be useful before the
+              cost of fine-tuning is incurred.
+            </p>
+            <p>
+              Both tracks are grounded in the same empirical reference signal: the performance of models trained on the
+              prepared or selected data. This enables a unified comparison among LLM generators, agentic workflows,
+              skill-guided systems, and training-free quality estimators.
+            </p>
+          </div>
+
+          <div class="method-flow">
+            <div class="flow-step">
+              <div class="step-index">Step 1</div>
+              <h4 class="title is-5">Prepare or Score Data</h4>
+              <p>
+                Construction methods synthesize SFT data from raw sources, while quality metrics assign utility scores
+                to candidate datasets before training.
+              </p>
+            </div>
+            <div class="flow-step">
+              <div class="step-index">Step 2</div>
+              <h4 class="title is-5">Train Under a Shared Protocol</h4>
+              <p>
+                Base models are fine-tuned using consistent hyperparameters, allowing the benchmark to isolate the effect
+                of data preparation decisions.
+              </p>
+            </div>
+            <div class="flow-step">
+              <div class="step-index">Step 3</div>
+              <h4 class="title is-5">Measure Downstream Utility</h4>
+              <p>
+                Constructed datasets are evaluated by induced benchmark performance, and quality metrics are evaluated by
+                their correlation with empirical downstream utility.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </section>
 
-  <section>
-    <div class="container">
-      <h2 class="section-title">Artifact</h2>
-      <div class="grid-2">
-        <div class="setup-box">
-          <p><strong>Text2QA Builder</strong> is the engineering artifact behind the pipeline. It converts long markdown books into reusable supervision data, including concept QA, process QA, and case-application supervision.</p>
+  <section class="section" id="methods">
+    <div class="container is-max-widescreen">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <span class="section-kicker"><i class="fas fa-flask"></i> Methods</span>
+          <h2 class="title is-3 section-title">Strong Baselines Released with DataPrep-Bench</h2>
+          <div class="content has-text-justified">
+            <p>
+              We release two methodological baselines aligned with the two benchmark tracks:
+              <b>Data-Construction-Skill</b> for skill-guided agentic data construction, and
+              <b>Distributional Alignment Score</b> for training-free data quality evaluation.
+            </p>
+          </div>
         </div>
-        <div class="setup-box">
-          <p><strong>Outputs</strong></p>
-          <p class="mono">supervision_batches<br>chunk_status.jsonl<br>supervision_merged.jsonl<br>validation.json<br>coverage.json</p>
+      </div>
+
+      <div class="columns is-centered" style="margin-top: 1.5rem;">
+        <div class="column is-5">
+          <div class="paper-card">
+            <div class="icon-badge"><i class="fas fa-wand-magic-sparkles"></i></div>
+            <h3 class="title is-4">Data-Construction-Skill</h3>
+            <p>
+              Data-Construction-Skill introduces skills as a reusable control layer for long-horizon agentic data
+              construction. A skill packages task instructions, output schemas, sample types, filtering rules, coverage
+              requirements, and validation behavior, while the agent remains responsible for planning over the corpus and
+              processing source chunks iteratively.
+            </p>
+            <div>
+              <span class="tag-soft tag-accent">Concept QA</span>
+              <span class="tag-soft tag-accent">Reasoning QA</span>
+              <span class="tag-soft tag-accent">Case-based QA</span>
+            </div>
+            <p style="margin-top: 0.8rem;">
+              The method filters navigational, noisy, duplicated, weakly grounded, and passage-dependent samples, so that
+              the final dataset reflects reusable domain supervision rather than book-comprehension behavior.
+            </p>
+          </div>
+        </div>
+
+        <div class="column is-5">
+          <div class="paper-card">
+            <div class="icon-badge"><i class="fas fa-vector-square"></i></div>
+            <h3 class="title is-4">Distributional Alignment Score</h3>
+            <p>
+              DAS estimates whether a candidate dataset is distributionally aligned with a domain proxy. Text samples are
+              embedded with a fixed encoder, and Maximum Mean Discrepancy is computed between candidate and proxy feature
+              distributions using a Gaussian RBF kernel.
+            </p>
+            <p>
+              Since smaller MMD indicates stronger alignment, DAS is defined as negative MMD. Higher DAS therefore
+              predicts higher downstream utility without requiring downstream fine-tuning.
+            </p>
+            <div style="margin-top: 1rem;">
+              <span class="tag-soft">Training-free</span>
+              <span class="tag-soft">Proxy-based</span>
+              <span class="tag-soft">Distribution-level</span>
+              <span class="tag-soft">MMD over embeddings</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </section>
 
-  <section id="citation">
-    <div class="container">
-      <h2 class="section-title">Citation</h2>
-      <p class="section-subtitle">Citation information will be updated once the paper is released. A temporary placeholder is provided below for the project page.</p>
-      <div class="citation-box">
-        <pre class="citation-text" id="citation-text">@misc{data_preparation_bench_2026,
-  title        = {Data Preparation Bench},
-  howpublished = {Project page},
+  <section class="section" id="results">
+    <div class="container is-max-widescreen">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <span class="section-kicker"><i class="fas fa-chart-simple"></i> Results</span>
+          <h2 class="title is-3 section-title">Experimental Results</h2>
+          <div class="content has-text-justified">
+            <p>
+              Experiments across six domains show that data preparation methods can lead to substantially different
+              downstream outcomes. Constructed data does not always improve model performance, highlighting why data
+              preparation must be evaluated under shared source corpora, base models, and benchmarks.
+            </p>
+            <p>
+              Data-Construction-Skill provides a strong baseline for skill-guided agentic data construction. DAS achieves
+              strong overall correlation with downstream performance across several domains and model architectures,
+              while Finance and Law reveal that no single quality metric is uniformly reliable across all settings.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <details class="result-details" open>
+        <summary>Table 1. Qwen2.5-7B Data Construction Results on Math, General, and Finance</summary>
+        <div class="table-card">
+          <div class="table-header">
+            <div>
+              <h4 class="title is-5">Qwen2.5-7B: Math, General, and Finance</h4>
+              <p>Downstream performance after fine-tuning on datasets synthesized by different generators.</p>
+            </div>
+          </div>
+          <div class="table-container">
+            <table class="nice-table wide">
+              <thead>
+                <tr>
+                  <th>Training Data Generator</th>
+                  <th>GSM8K</th>
+                  <th>AMC23</th>
+                  <th>AIME24</th>
+                  <th>Minerva</th>
+                  <th>Olympiad</th>
+                  <th>MATH-500</th>
+                  <th>Gaokao2024</th>
+                  <th>Math Avg</th>
+                  <th>MMLU-Redux</th>
+                  <th>General Avg</th>
+                  <th>CPA-KQA</th>
+                  <th>FinEval-KR</th>
+                  <th>XFinBench</th>
+                  <th>Finance Avg</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><b>No synthetic training</b></td>
+                  <td>69.9</td><td>17.5</td><td>0.0</td><td>10.7</td><td>10.7</td><td class="best">39.8</td><td>16.5</td><td>23.6</td>
+                  <td>77.7</td><td>77.7</td><td class="second">57.6</td><td class="second">59.4</td><td>56.3</td><td class="second">57.8</td>
+                </tr>
+                <tr class="group-row"><td colspan="15">DataFlow-based Generators</td></tr>
+                <tr>
+                  <td>DataFlow</td>
+                  <td>56.5</td><td>7.5</td><td>0.0</td><td>7.7</td><td>7.9</td><td>27.4</td><td>17.6</td><td>17.8</td>
+                  <td class="second">77.9</td><td class="second">77.9</td><td>51.0</td><td>54.5</td><td class="best">59.3</td><td>54.9</td>
+                </tr>
+                <tr>
+                  <td>DataFlow-Agent</td>
+                  <td>56.7</td><td>10.0</td><td>0.0</td><td>8.8</td><td>6.2</td><td>22.8</td><td class="best">28.6</td><td>19.0</td>
+                  <td>76.5</td><td>76.5</td><td class="muted-cell">—</td><td class="muted-cell">—</td><td class="muted-cell">—</td><td class="muted-cell">—</td>
+                </tr>
+                <tr class="group-row"><td colspan="15">Direct LLM-based Generators</td></tr>
+                <tr>
+                  <td>Claude Opus 4.6</td>
+                  <td>68.8</td><td>12.5</td><td>0.0</td><td>8.8</td><td>9.8</td><td>35.5</td><td>14.3</td><td>21.4</td>
+                  <td class="best">78.2</td><td class="best">78.2</td><td>37.6</td><td>39.6</td><td>55.9</td><td>44.4</td>
+                </tr>
+                <tr>
+                  <td>Gemini 3.0 Pro</td>
+                  <td>72.1</td><td>20.0</td><td>0.0</td><td>10.7</td><td>11.4</td><td>37.9</td><td>15.4</td><td>23.9</td>
+                  <td>77.8</td><td>77.8</td><td>48.6</td><td>49.5</td><td class="second">58.4</td><td>52.2</td>
+                </tr>
+                <tr>
+                  <td>GPT-5.2</td>
+                  <td>66.7</td><td>17.5</td><td>0.0</td><td>7.7</td><td>11.1</td><td>32.7</td><td>14.3</td><td>21.4</td>
+                  <td class="second">77.9</td><td class="second">77.9</td><td>47.1</td><td>43.6</td><td>53.6</td><td>48.1</td>
+                </tr>
+                <tr class="group-row"><td colspan="15">Agent-based Generators</td></tr>
+                <tr>
+                  <td>Qwen3.5-Plus</td>
+                  <td class="best">72.7</td><td class="second">22.5</td><td class="best">3.3</td><td class="second">11.0</td><td class="second">11.6</td><td class="second">38.7</td><td>16.5</td><td>25.2</td>
+                  <td>77.6</td><td>77.6</td><td>48.1</td><td>49.5</td><td>55.6</td><td>51.1</td>
+                </tr>
+                <tr>
+                  <td>GLM-4.7</td>
+                  <td>71.4</td><td class="second">22.5</td><td class="best">3.3</td><td>9.6</td><td class="second">11.6</td><td>37.9</td><td>20.9</td><td class="second">25.3</td>
+                  <td>77.3</td><td>77.3</td><td>51.4</td><td>55.4</td><td>53.1</td><td>53.3</td>
+                </tr>
+                <tr>
+                  <td>Claude Opus 4.6 Agent</td>
+                  <td>69.4</td><td>10.0</td><td>0.0</td><td class="second">11.0</td><td>8.9</td><td>33.8</td><td>19.8</td><td>21.8</td>
+                  <td>75.9</td><td>75.9</td><td>32.4</td><td>39.6</td><td>53.8</td><td>41.9</td>
+                </tr>
+                <tr>
+                  <td>Gemini 3.0 Pro Agent</td>
+                  <td>70.1</td><td>15.0</td><td>0.0</td><td>8.8</td><td>10.8</td><td>35.7</td><td>20.9</td><td>23.0</td>
+                  <td>77.7</td><td>77.7</td><td>53.3</td><td>52.5</td><td>55.4</td><td>53.7</td>
+                </tr>
+                <tr>
+                  <td>GPT-5.2 Agent</td>
+                  <td>69.6</td><td class="best">25.0</td><td class="best">3.3</td><td>8.8</td><td>9.9</td><td>35.6</td><td class="second">26.4</td><td class="best">25.5</td>
+                  <td>77.7</td><td>77.7</td><td>39.1</td><td>39.6</td><td>51.0</td><td>43.2</td>
+                </tr>
+                <tr>
+                  <td>GPT-5.3-codex Agent</td>
+                  <td>70.8</td><td>15.0</td><td>0.0</td><td class="second">11.0</td><td class="best">11.7</td><td>38.5</td><td>13.2</td><td>22.9</td>
+                  <td>77.6</td><td>77.6</td><td class="best">58.6</td><td class="best">63.4</td><td>55.9</td><td class="best">59.3</td>
+                </tr>
+                <tr class="group-row"><td colspan="15">Skill-guided Generator</td></tr>
+                <tr>
+                  <td><b>Data-Construction-Skill</b></td>
+                  <td class="second">72.6</td><td>17.5</td><td class="best">3.3</td><td class="best">14.0</td><td>11.1</td><td>36.8</td><td>13.2</td><td>24.1</td>
+                  <td class="best">78.2</td><td class="best">78.2</td><td class="second">57.6</td><td>53.5</td><td>55.4</td><td>55.5</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </details>
+
+      <details class="result-details">
+        <summary>Table 2. Llama-3.1-8B Data Construction Results on Math, General, and Finance</summary>
+        <div class="table-card">
+          <div class="table-header">
+            <div>
+              <h4 class="title is-5">Llama-3.1-8B: Math, General, and Finance</h4>
+              <p>Downstream performance after fine-tuning on datasets synthesized by different generators.</p>
+            </div>
+          </div>
+          <div class="table-container">
+            <table class="nice-table wide">
+              <thead>
+                <tr>
+                  <th>Training Data Generator</th>
+                  <th>GSM8K</th><th>AMC23</th><th>AIME24</th><th>Minerva</th><th>Olympiad</th><th>MATH-500</th><th>Gaokao2024</th><th>Math Avg</th>
+                  <th>MMLU-Redux</th><th>General Avg</th>
+                  <th>CPA-KQA</th><th>FinEval-KR</th><th>XFinBench</th><th>Finance Avg</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><b>No synthetic training</b></td>
+                  <td class="best">33.9</td><td class="best">10.0</td><td class="best">0.0</td><td>6.6</td><td>3.7</td><td class="best">13.6</td><td>14.3</td><td class="best">11.7</td>
+                  <td class="best">67.1</td><td class="best">67.1</td><td>12.6</td><td>12.4</td><td>20.3</td><td>15.1</td>
+                </tr>
+                <tr class="group-row"><td colspan="15">DataFlow-based Generators</td></tr>
+                <tr>
+                  <td>DataFlow</td>
+                  <td>8.4</td><td class="best">10.0</td><td class="best">0.0</td><td>4.8</td><td>2.5</td><td>6.1</td><td>8.8</td><td>5.8</td>
+                  <td>51.1</td><td>51.1</td><td>27.1</td><td>26.7</td><td>40.5</td><td>31.4</td>
+                </tr>
+                <tr>
+                  <td>DataFlow-Agent</td>
+                  <td>8.7</td><td>2.5</td><td class="best">0.0</td><td>4.4</td><td>3.3</td><td>7.2</td><td class="second">16.5</td><td>6.1</td>
+                  <td>48.4</td><td>48.4</td><td class="second">34.8</td><td class="best">31.7</td><td class="second">43.0</td><td class="best">36.5</td>
+                </tr>
+                <tr class="group-row"><td colspan="15">Direct LLM-based Generators</td></tr>
+                <tr>
+                  <td>Claude Opus 4.6</td>
+                  <td>28.7</td><td>5.0</td><td class="best">0.0</td><td>6.2</td><td>2.8</td><td>11.2</td><td>11.0</td><td>9.3</td>
+                  <td class="second">52.9</td><td class="second">52.9</td><td>22.9</td><td>24.8</td><td>37.5</td><td>28.4</td>
+                </tr>
+                <tr>
+                  <td>Gemini 3.0 Pro</td>
+                  <td>30.7</td><td class="second">7.5</td><td class="best">0.0</td><td class="best">8.1</td><td>3.7</td><td>12.6</td><td>14.3</td><td class="second">11.0</td>
+                  <td>50.8</td><td>50.8</td><td>23.8</td><td class="second">27.7</td><td>42.1</td><td>31.2</td>
+                </tr>
+                <tr>
+                  <td>GPT-5.2</td>
+                  <td>26.8</td><td>2.5</td><td class="best">0.0</td><td class="second">7.7</td><td class="second">4.1</td><td>10.2</td><td>13.2</td><td>9.2</td>
+                  <td>47.4</td><td>47.4</td><td>25.2</td><td>24.8</td><td>32.2</td><td>27.4</td>
+                </tr>
+                <tr class="group-row"><td colspan="15">Agent-based Generators</td></tr>
+                <tr>
+                  <td>Qwen3.5-Plus</td>
+                  <td class="second">33.7</td><td>5.0</td><td class="best">0.0</td><td>6.6</td><td class="best">4.4</td><td>11.3</td><td>12.1</td><td>10.4</td>
+                  <td>50.4</td><td>50.4</td><td>23.3</td><td>20.8</td><td>38.2</td><td>27.4</td>
+                </tr>
+                <tr>
+                  <td>GLM-4.7</td>
+                  <td>31.8</td><td>2.5</td><td class="best">0.0</td><td>5.9</td><td>3.1</td><td class="second">13.0</td><td class="best">17.6</td><td>10.6</td>
+                  <td>49.2</td><td>49.2</td><td>23.8</td><td>25.7</td><td class="second">43.0</td><td>30.8</td>
+                </tr>
+                <tr>
+                  <td>Claude Opus 4.6 Agent</td>
+                  <td>16.4</td><td>5.0</td><td class="best">0.0</td><td>6.6</td><td>2.5</td><td>7.7</td><td>8.8</td><td>6.7</td>
+                  <td>47.5</td><td>47.5</td><td>23.3</td><td>25.7</td><td>37.7</td><td>28.9</td>
+                </tr>
+                <tr>
+                  <td>Gemini 3.0 Pro Agent</td>
+                  <td>29.6</td><td class="second">7.5</td><td class="best">0.0</td><td>6.2</td><td>3.6</td><td>11.5</td><td class="best">17.6</td><td>10.9</td>
+                  <td>47.9</td><td>47.9</td><td>25.2</td><td>21.8</td><td>40.9</td><td>29.3</td>
+                </tr>
+                <tr>
+                  <td>GPT-5.2 Agent</td>
+                  <td>28.7</td><td>5.0</td><td class="best">0.0</td><td>6.6</td><td>4.0</td><td>10.4</td><td>15.4</td><td>10.0</td>
+                  <td>49.0</td><td>49.0</td><td>21.9</td><td>21.8</td><td class="best">44.8</td><td>29.5</td>
+                </tr>
+                <tr>
+                  <td>GPT-5.3-codex Agent</td>
+                  <td>29.9</td><td>2.5</td><td class="best">0.0</td><td>5.9</td><td>2.8</td><td>12.2</td><td>14.3</td><td>9.7</td>
+                  <td>51.3</td><td>51.3</td><td>23.3</td><td>25.7</td><td>41.8</td><td>30.3</td>
+                </tr>
+                <tr class="group-row"><td colspan="15">Skill-guided Generator</td></tr>
+                <tr>
+                  <td><b>Data-Construction-Skill</b></td>
+                  <td>16.5</td><td class="second">7.5</td><td class="best">0.0</td><td>4.4</td><td>3.0</td><td>9.5</td><td>11.0</td><td>7.4</td>
+                  <td>51.3</td><td>51.3</td><td class="best">36.2</td><td class="best">31.7</td><td>34.7</td><td class="second">34.2</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </details>
+
+      <details class="result-details">
+        <summary>Table 3. Qwen2.5-7B Data Construction Results on Law, Medicine, and Science</summary>
+        <div class="table-card">
+          <div class="table-header">
+            <div>
+              <h4 class="title is-5">Qwen2.5-7B: Law, Medicine, and Science</h4>
+              <p>Specialized-domain results after fine-tuning on constructed data.</p>
+            </div>
+          </div>
+          <div class="table-container">
+            <table class="nice-table extra-wide">
+              <thead>
+                <tr>
+                  <th>Training Data Generator</th>
+                  <th>LegalBench</th><th>LexGLUE</th><th>Law Avg</th>
+                  <th>MedCase</th><th>MedMCQA</th><th>MedR-Bench</th><th>Medicine Avg</th>
+                  <th>MMLU-STEM</th><th>MMLU-Pro</th><th>GPQA</th><th>SuperGPQA</th><th>ChemBench</th><th>PIQA</th><th>SciBench</th><th>Science Avg</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><b>No synthetic training</b></td>
+                  <td>86.9</td><td>62.0</td><td>74.5</td>
+                  <td>13.6</td><td>27.4</td><td>67.8</td><td>36.3</td>
+                  <td class="best">47.5</td><td class="best">28.6</td><td>21.1</td><td class="best">15.7</td><td class="best">24.3</td><td class="best">52.7</td><td class="second">5.2</td><td class="best">27.9</td>
+                </tr>
+                <tr class="group-row"><td colspan="16">DataFlow-based Generators</td></tr>
+                <tr>
+                  <td>DataFlow</td>
+                  <td>89.7</td><td class="best">64.8</td><td class="best">77.2</td>
+                  <td>9.9</td><td>29.4</td><td>63.6</td><td>34.3</td>
+                  <td>37.9</td><td>23.9</td><td>20.7</td><td>11.8</td><td>15.7</td><td>28.8</td><td>2.0</td><td>20.1</td>
+                </tr>
+                <tr>
+                  <td>DataFlow-Agent</td>
+                  <td class="best">92.0</td><td>57.4</td><td>74.7</td>
+                  <td>11.9</td><td>24.1</td><td>65.6</td><td>33.9</td>
+                  <td>44.2</td><td>24.6</td><td>18.0</td><td>13.0</td><td>18.8</td><td>43.5</td><td>2.0</td><td>23.4</td>
+                </tr>
+                <tr class="group-row"><td colspan="16">Direct LLM-based Generators</td></tr>
+                <tr>
+                  <td>Claude Opus 4.6</td>
+                  <td>88.0</td><td>63.2</td><td class="second">75.6</td>
+                  <td>13.9</td><td>8.1</td><td>66.8</td><td>29.6</td>
+                  <td>38.7</td><td>24.6</td><td class="second">22.4</td><td>13.1</td><td>19.3</td><td>40.9</td><td>2.7</td><td>23.1</td>
+                </tr>
+                <tr>
+                  <td>Gemini 3.0 Pro</td>
+                  <td>85.9</td><td class="second">63.5</td><td>74.7</td>
+                  <td>12.2</td><td>6.0</td><td class="second">69.1</td><td>29.1</td>
+                  <td>39.7</td><td>25.7</td><td>19.7</td><td>12.7</td><td>21.2</td><td>44.0</td><td>3.3</td><td>23.8</td>
+                </tr>
+                <tr>
+                  <td>GPT-5.2</td>
+                  <td>89.2</td><td>60.9</td><td>75.0</td>
+                  <td>10.6</td><td>23.3</td><td>66.0</td><td>33.3</td>
+                  <td>38.3</td><td>24.6</td><td class="best">22.9</td><td>12.8</td><td>17.9</td><td>38.1</td><td>2.0</td><td>22.4</td>
+                </tr>
+                <tr class="group-row"><td colspan="16">Agent-based Generators</td></tr>
+                <tr>
+                  <td>Qwen3.5-Plus</td>
+                  <td class="second">90.2</td><td>61.0</td><td class="second">75.6</td>
+                  <td class="second">16.5</td><td>16.5</td><td>68.3</td><td>33.8</td>
+                  <td class="best">47.5</td><td>26.9</td><td>21.7</td><td class="second">14.8</td><td class="second">22.9</td><td>48.6</td><td class="best">5.3</td><td class="second">26.8</td>
+                </tr>
+                <tr>
+                  <td>GLM-4.7</td>
+                  <td>84.8</td><td>61.4</td><td>73.1</td>
+                  <td>15.2</td><td>10.6</td><td>66.8</td><td>30.9</td>
+                  <td>42.0</td><td>25.7</td><td>18.9</td><td>12.7</td><td>19.4</td><td>43.6</td><td>2.3</td><td>23.5</td>
+                </tr>
+                <tr>
+                  <td>Claude Opus 4.6 Agent</td>
+                  <td>65.2</td><td>48.8</td><td>57.0</td>
+                  <td class="best">16.6</td><td class="second">50.7</td><td>54.3</td><td class="second">40.5</td>
+                  <td>36.6</td><td>24.1</td><td>19.0</td><td>12.9</td><td>19.2</td><td>44.1</td><td>2.2</td><td>22.6</td>
+                </tr>
+                <tr>
+                  <td>Gemini 3.0 Pro Agent</td>
+                  <td>57.5</td><td>55.5</td><td>56.5</td>
+                  <td>15.8</td><td class="best">52.3</td><td>63.4</td><td class="best">43.8</td>
+                  <td class="second">46.0</td><td class="second">27.6</td><td class="second">22.4</td><td>14.7</td><td>20.3</td><td class="second">50.0</td><td>2.5</td><td>26.2</td>
+                </tr>
+                <tr>
+                  <td>GPT-5.2 Agent</td>
+                  <td>61.7</td><td>51.9</td><td>56.8</td>
+                  <td>14.7</td><td>45.0</td><td>59.0</td><td>39.6</td>
+                  <td>44.0</td><td>25.3</td><td>21.1</td><td>14.0</td><td>20.2</td><td>46.4</td><td>2.8</td><td>24.8</td>
+                </tr>
+                <tr>
+                  <td>GPT-5.3-codex Agent</td>
+                  <td>87.8</td><td>63.4</td><td class="second">75.6</td>
+                  <td>13.6</td><td>20.3</td><td class="best">70.0</td><td>34.6</td>
+                  <td>35.9</td><td>22.4</td><td>16.4</td><td>11.2</td><td>16.5</td><td>33.1</td><td>3.4</td><td>19.8</td>
+                </tr>
+                <tr class="group-row"><td colspan="16">Skill-guided Generator</td></tr>
+                <tr>
+                  <td><b>Data-Construction-Skill</b></td>
+                  <td>85.5</td><td>61.7</td><td>73.6</td>
+                  <td>9.9</td><td>15.3</td><td>65.4</td><td>30.2</td>
+                  <td>39.8</td><td>22.8</td><td>19.2</td><td>12.2</td><td>17.1</td><td>36.9</td><td>1.7</td><td>21.4</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </details>
+
+      <details class="result-details">
+        <summary>Table 4. Llama-3.1-8B Data Construction Results on Law, Medicine, and Science</summary>
+        <div class="table-card">
+          <div class="table-header">
+            <div>
+              <h4 class="title is-5">Llama-3.1-8B: Law, Medicine, and Science</h4>
+              <p>Specialized-domain results after fine-tuning on constructed data.</p>
+            </div>
+          </div>
+          <div class="table-container">
+            <table class="nice-table extra-wide">
+              <thead>
+                <tr>
+                  <th>Training Data Generator</th>
+                  <th>LegalBench</th><th>LexGLUE</th><th>Law Avg</th>
+                  <th>MedCase</th><th>MedMCQA</th><th>MedR-Bench</th><th>Medicine Avg</th>
+                  <th>MMLU-STEM</th><th>MMLU-Pro</th><th>GPQA</th><th>SuperGPQA</th><th>ChemBench</th><th>PIQA</th><th>SciBench</th><th>Science Avg</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><b>No synthetic training</b></td>
+                  <td>87.9</td><td>51.1</td><td>69.5</td>
+                  <td>9.9</td><td>17.1</td><td>34.3</td><td>20.4</td>
+                  <td class="best">25.3</td><td class="best">14.7</td><td class="best">14.1</td><td class="best">8.2</td><td class="best">14.7</td><td class="second">11.4</td><td class="best">3.8</td><td class="best">13.2</td>
+                </tr>
+                <tr class="group-row"><td colspan="16">DataFlow-based Generators</td></tr>
+                <tr>
+                  <td>DataFlow</td>
+                  <td>84.0</td><td>61.3</td><td>72.7</td>
+                  <td>12.3</td><td>21.3</td><td>56.1</td><td>29.9</td>
+                  <td>8.5</td><td>3.7</td><td>5.1</td><td>2.5</td><td>6.1</td><td>6.4</td><td>0.3</td><td>4.7</td>
+                </tr>
+                <tr>
+                  <td>DataFlow-Agent</td>
+                  <td>85.2</td><td>61.0</td><td>73.1</td>
+                  <td>12.4</td><td class="best">33.8</td><td>61.8</td><td class="second">36.0</td>
+                  <td>5.6</td><td>1.7</td><td>3.3</td><td>1.7</td><td>4.6</td><td>4.8</td><td>0.0</td><td>3.1</td>
+                </tr>
+                <tr class="group-row"><td colspan="16">Direct LLM-based Generators</td></tr>
+                <tr>
+                  <td>Claude Opus 4.6</td>
+                  <td>85.9</td><td>56.1</td><td>71.0</td>
+                  <td>16.3</td><td>27.2</td><td>64.8</td><td class="best">36.1</td>
+                  <td>17.1</td><td class="second">10.4</td><td>10.8</td><td class="second">6.1</td><td>9.2</td><td>9.6</td><td class="second">2.2</td><td class="second">9.3</td>
+                </tr>
+                <tr>
+                  <td>Gemini 3.0 Pro</td>
+                  <td>86.1</td><td>61.9</td><td>74.0</td>
+                  <td>16.4</td><td>16.3</td><td>67.6</td><td>33.4</td>
+                  <td>16.7</td><td>10.3</td><td>9.8</td><td class="second">6.1</td><td>10.2</td><td>9.2</td><td>1.6</td><td>9.1</td>
+                </tr>
+                <tr>
+                  <td>GPT-5.2</td>
+                  <td class="best">91.6</td><td>61.3</td><td class="best">76.4</td>
+                  <td>13.5</td><td>26.9</td><td>56.8</td><td>32.4</td>
+                  <td>14.7</td><td>7.4</td><td>10.7</td><td>4.9</td><td>9.0</td><td class="best">11.9</td><td>0.6</td><td>8.5</td>
+                </tr>
+                <tr class="group-row"><td colspan="16">Agent-based Generators</td></tr>
+                <tr>
+                  <td>Qwen3.5-Plus</td>
+                  <td>84.2</td><td class="second">62.3</td><td>73.2</td>
+                  <td>16.7</td><td>13.7</td><td class="second">69.9</td><td>33.4</td>
+                  <td class="second">17.3</td><td>9.5</td><td class="second">11.1</td><td>5.1</td><td class="second">12.1</td><td>8.9</td><td>0.9</td><td class="second">9.3</td>
+                </tr>
+                <tr>
+                  <td>GLM-4.7</td>
+                  <td>83.8</td><td>60.7</td><td>72.2</td>
+                  <td>15.6</td><td>20.0</td><td>67.1</td><td>34.2</td>
+                  <td>16.9</td><td>9.9</td><td>9.1</td><td>5.4</td><td>12.0</td><td>8.4</td><td>0.6</td><td>8.9</td>
+                </tr>
+                <tr>
+                  <td>Claude Opus 4.6 Agent</td>
+                  <td>87.4</td><td>52.1</td><td>69.8</td>
+                  <td>14.8</td><td>18.4</td><td>64.8</td><td>32.7</td>
+                  <td>17.0</td><td>9.4</td><td>10.7</td><td>5.7</td><td>10.9</td><td>7.8</td><td>1.9</td><td>9.1</td>
+                </tr>
+                <tr>
+                  <td>Gemini 3.0 Pro Agent</td>
+                  <td>86.3</td><td>60.6</td><td>73.5</td>
+                  <td>16.5</td><td>15.9</td><td class="best">70.2</td><td>34.2</td>
+                  <td>10.1</td><td>3.8</td><td>5.0</td><td>2.3</td><td>5.9</td><td>11.0</td><td>0.3</td><td>5.5</td>
+                </tr>
+                <tr>
+                  <td>GPT-5.2 Agent</td>
+                  <td>84.5</td><td>61.3</td><td>72.9</td>
+                  <td class="second">16.8</td><td>21.3</td><td>60.1</td><td>32.7</td>
+                  <td>8.1</td><td>3.3</td><td>2.9</td><td>2.2</td><td>4.4</td><td>9.1</td><td>0.2</td><td>4.3</td>
+                </tr>
+                <tr>
+                  <td>GPT-5.3-codex Agent</td>
+                  <td class="second">89.6</td><td class="best">63.1</td><td class="second">76.3</td>
+                  <td class="best">18.3</td><td>23.7</td><td>65.0</td><td>35.7</td>
+                  <td>16.4</td><td>9.0</td><td>10.4</td><td>5.3</td><td>8.5</td><td>7.7</td><td>0.6</td><td>8.3</td>
+                </tr>
+                <tr class="group-row"><td colspan="16">Skill-guided Generator</td></tr>
+                <tr>
+                  <td><b>Data-Construction-Skill</b></td>
+                  <td>86.6</td><td>53.7</td><td>70.2</td>
+                  <td>13.7</td><td class="second">27.9</td><td>64.6</td><td>35.4</td>
+                  <td>16.2</td><td>8.5</td><td>9.1</td><td>4.8</td><td>7.5</td><td>5.9</td><td>0.2</td><td>7.5</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </details>
+
+      <details class="result-details" open>
+        <summary>Table 5. Data Quality Evaluation Results on General, Math, and Science</summary>
+        <div class="table-card">
+          <div class="table-header">
+            <div>
+              <h4 class="title is-5">Pearson Correlation with Downstream Performance</h4>
+              <p>Results on General, Math, and Science. Time denotes average processing duration per dataset.</p>
+            </div>
+          </div>
+          <div class="table-container">
+            <table class="nice-table wide">
+              <thead>
+                <tr>
+                  <th>Algorithm</th><th>Time (s)</th>
+                  <th>General Qwen</th><th>General Llama</th><th>General Mistral</th><th>General Avg</th>
+                  <th>Math Qwen</th><th>Math Llama</th><th>Math Mistral</th><th>Math Avg</th>
+                  <th>Science Qwen</th><th>Science Llama</th><th>Science Mistral</th><th>Science Avg</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="group-row"><td colspan="14">Distribution Based</td></tr>
+                <tr>
+                  <td><b>MMD / DAS</b></td><td>306.02</td>
+                  <td class="negative">0.64</td><td class="negative">0.65</td><td class="negative">0.74</td><td class="best">0.68</td>
+                  <td class="negative">0.72</td><td class="negative">0.93</td><td class="negative">0.94</td><td class="best">0.86</td>
+                  <td class="negative">0.53</td><td class="negative">0.82</td><td class="negative">0.80</td><td class="best">0.72</td>
+                </tr>
+                <tr class="group-row"><td colspan="14">Quality Based</td></tr>
+                <tr><td>Qurating-WritingStyle</td><td>84.65</td><td class="positive">0.17</td><td class="positive">0.36</td><td class="positive">0.38</td><td>0.30</td><td class="negative">0.48</td><td class="negative">0.33</td><td class="negative">0.46</td><td>0.42</td><td class="negative">0.10</td><td class="negative">0.16</td><td class="positive">0.04</td><td>0.07</td></tr>
+                <tr><td>Qurating-Expertise</td><td>84.65</td><td class="negative">0.17</td><td class="negative">0.37</td><td class="negative">0.42</td><td>0.32</td><td class="positive">0.61</td><td class="positive">0.76</td><td class="positive">0.71</td><td>0.69</td><td class="positive">0.56</td><td class="positive">0.76</td><td class="positive">0.83</td><td class="best">0.72</td></tr>
+                <tr><td>Qurating-FactsTrivia</td><td>84.65</td><td class="positive">0.03</td><td class="positive">0.10</td><td class="positive">0.02</td><td>0.05</td><td class="negative">0.35</td><td class="negative">0.04</td><td class="negative">0.20</td><td>0.20</td><td class="negative">0.08</td><td class="positive">0.14</td><td class="positive">0.32</td><td>0.13</td></tr>
+                <tr><td>Qurating-Educational</td><td>84.65</td><td class="negative">0.03</td><td class="positive">0.17</td><td class="positive">0.13</td><td>0.09</td><td class="negative">0.23</td><td class="positive">0.04</td><td class="negative">0.10</td><td>0.10</td><td class="positive">0.01</td><td class="positive">0.17</td><td class="positive">0.34</td><td>0.18</td></tr>
+                <tr><td>BERTVendi</td><td>459.37</td><td class="positive">0.38</td><td class="positive">0.47</td><td class="positive">0.58</td><td>0.47</td><td class="negative">0.69</td><td class="negative">0.40</td><td class="negative">0.54</td><td>0.54</td><td class="negative">0.41</td><td class="negative">0.10</td><td class="negative">0.07</td><td>0.19</td></tr>
+                <tr><td>SimCSEVendi</td><td>459.37</td><td class="positive">0.30</td><td class="positive">0.46</td><td class="positive">0.55</td><td>0.44</td><td class="negative">0.80</td><td class="negative">0.50</td><td class="negative">0.63</td><td>0.65</td><td class="negative">0.66</td><td class="negative">0.43</td><td class="negative">0.34</td><td>0.48</td></tr>
+                <tr><td>Deita-Quality</td><td>434.99</td><td class="positive">0.06</td><td class="positive">0.46</td><td class="positive">0.18</td><td>0.23</td><td class="negative">0.42</td><td class="negative">0.46</td><td class="negative">0.54</td><td>0.47</td><td class="positive">0.08</td><td class="negative">0.26</td><td class="negative">0.13</td><td>0.10</td></tr>
+                <tr><td>RewardModel</td><td>109.61</td><td class="positive">0.56</td><td class="positive">0.67</td><td class="positive">0.54</td><td>0.59</td><td class="negative">0.71</td><td class="negative">0.81</td><td class="negative">0.85</td><td>0.79</td><td class="negative">0.39</td><td class="negative">0.54</td><td class="negative">0.32</td><td>0.42</td></tr>
+                <tr><td>Superfiltering</td><td>40.05</td><td class="positive">0.13</td><td class="positive">0.25</td><td class="positive">0.30</td><td>0.23</td><td class="negative">0.11</td><td class="negative">0.21</td><td class="negative">0.29</td><td>0.21</td><td class="positive">0.02</td><td class="negative">0.10</td><td class="negative">0.13</td><td>0.07</td></tr>
+                <tr><td>FineWebEdu</td><td>11.67</td><td class="negative">0.43</td><td class="negative">0.43</td><td class="negative">0.37</td><td>0.41</td><td class="positive">0.42</td><td class="positive">0.74</td><td class="positive">0.65</td><td>0.60</td><td class="positive">0.09</td><td class="positive">0.45</td><td class="positive">0.59</td><td>0.37</td></tr>
+                <tr><td>PairQual</td><td>12.34</td><td class="negative">0.03</td><td class="negative">0.03</td><td class="negative">0.15</td><td>0.07</td><td class="negative">0.16</td><td class="positive">0.06</td><td class="negative">0.06</td><td>0.05</td><td class="positive">0.19</td><td class="positive">0.23</td><td class="positive">0.40</td><td>0.27</td></tr>
+                <tr><td>Perplexity</td><td>40.60</td><td class="positive">0.47</td><td class="positive">0.43</td><td class="positive">0.48</td><td>0.46</td><td class="negative">0.71</td><td class="negative">0.56</td><td class="negative">0.62</td><td>0.63</td><td class="negative">0.59</td><td class="negative">0.32</td><td class="negative">0.44</td><td>0.45</td></tr>
+                <tr class="group-row"><td colspan="14">Diversity Based</td></tr>
+                <tr><td>MTLD</td><td>2.59</td><td class="positive">0.48</td><td class="positive">0.38</td><td class="positive">0.32</td><td>0.39</td><td class="negative">0.58</td><td class="negative">0.59</td><td class="negative">0.67</td><td>0.62</td><td class="negative">0.48</td><td class="negative">0.67</td><td class="negative">0.49</td><td>0.55</td></tr>
+                <tr><td>HD-D</td><td>2.59</td><td class="positive">0.17</td><td class="negative">0.08</td><td class="positive">0.02</td><td>0.03</td><td class="negative">0.34</td><td class="negative">0.17</td><td class="negative">0.25</td><td>0.25</td><td class="negative">0.64</td><td class="negative">0.61</td><td class="negative">0.44</td><td>0.56</td></tr>
+                <tr><td>Task2Vec</td><td>7.93</td><td class="negative">0.04</td><td class="positive">0.16</td><td class="positive">0.17</td><td>0.10</td><td class="negative">0.48</td><td class="negative">0.09</td><td class="negative">0.25</td><td>0.27</td><td class="negative">0.65</td><td class="negative">0.36</td><td class="negative">0.21</td><td>0.41</td></tr>
+                <tr><td>Ngram</td><td>1.06</td><td class="negative">0.01</td><td class="negative">0.05</td><td class="negative">0.00</td><td>0.02</td><td class="negative">0.31</td><td class="positive">0.12</td><td class="negative">0.05</td><td>0.08</td><td class="negative">0.22</td><td class="positive">0.04</td><td class="positive">0.22</td><td>0.01</td></tr>
+                <tr><td>Deita-Complexity</td><td>344.34</td><td class="positive">0.52</td><td class="positive">0.25</td><td class="positive">0.26</td><td>0.34</td><td class="negative">0.19</td><td class="negative">0.34</td><td class="negative">0.32</td><td>0.28</td><td class="positive">0.05</td><td class="positive">0.27</td><td class="positive">0.32</td><td>0.22</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </details>
+
+      <details class="result-details" open>
+        <summary>Table 6. Data Quality Evaluation Results on Medical, Finance, and Law</summary>
+        <div class="table-card">
+          <div class="table-header">
+            <div>
+              <h4 class="title is-5">Pearson Correlation with Downstream Performance</h4>
+              <p>Results on Medical, Finance, and Law.</p>
+            </div>
+          </div>
+          <div class="table-container">
+            <table class="nice-table wide">
+              <thead>
+                <tr>
+                  <th>Algorithm</th>
+                  <th>Medical Qwen</th><th>Medical Llama</th><th>Medical Mistral</th><th>Medical Avg</th>
+                  <th>Finance Qwen</th><th>Finance Llama</th><th>Finance Mistral</th><th>Finance Avg</th>
+                  <th>Law Qwen</th><th>Law Llama</th><th>Law Mistral</th><th>Law Avg</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="group-row"><td colspan="13">Distribution Based</td></tr>
+                <tr><td><b>MMD / DAS</b></td><td class="negative">0.73</td><td class="negative">0.87</td><td class="negative">0.72</td><td class="best">0.77</td><td class="positive">0.18</td><td class="negative">0.57</td><td class="negative">0.14</td><td>0.18</td><td class="positive">0.50</td><td class="positive">0.17</td><td class="positive">0.40</td><td>0.36</td></tr>
+                <tr class="group-row"><td colspan="13">Quality Based</td></tr>
+                <tr><td>Qurating-WritingStyle</td><td class="negative">0.10</td><td class="positive">0.20</td><td class="negative">0.06</td><td>0.01</td><td class="positive">0.03</td><td class="positive">0.13</td><td class="positive">0.33</td><td>0.16</td><td class="positive">0.63</td><td class="negative">0.08</td><td class="positive">0.64</td><td>0.40</td></tr>
+                <tr><td>Qurating-Expertise</td><td class="positive">0.56</td><td class="positive">0.73</td><td class="positive">0.66</td><td>0.65</td><td class="negative">0.04</td><td class="positive">0.13</td><td class="positive">0.60</td><td>0.23</td><td class="positive">0.72</td><td class="negative">0.37</td><td class="positive">0.37</td><td>0.24</td></tr>
+                <tr><td>Qurating-FactsTrivia</td><td class="positive">0.31</td><td class="positive">0.66</td><td class="positive">0.36</td><td>0.44</td><td class="negative">0.06</td><td class="positive">0.23</td><td class="positive">0.47</td><td>0.21</td><td class="positive">0.58</td><td class="negative">0.15</td><td class="positive">0.70</td><td>0.37</td></tr>
+                <tr><td>Qurating-Educational</td><td class="positive">0.05</td><td class="positive">0.40</td><td class="positive">0.14</td><td>0.20</td><td class="negative">0.05</td><td class="positive">0.10</td><td class="positive">0.49</td><td>0.18</td><td class="positive">0.57</td><td class="negative">0.27</td><td class="positive">0.64</td><td>0.31</td></tr>
+                <tr><td>Deita-Quality</td><td class="positive">0.57</td><td class="positive">0.63</td><td class="positive">0.68</td><td>0.63</td><td class="negative">0.18</td><td class="negative">0.45</td><td class="positive">0.15</td><td>0.16</td><td class="positive">0.46</td><td class="negative">0.59</td><td class="positive">0.24</td><td>0.04</td></tr>
+                <tr><td>RewardModel</td><td class="positive">0.26</td><td class="positive">0.32</td><td class="positive">0.23</td><td>0.27</td><td class="negative">0.07</td><td class="negative">0.30</td><td class="negative">0.06</td><td>0.14</td><td class="positive">0.43</td><td class="negative">0.08</td><td class="positive">0.51</td><td>0.28</td></tr>
+                <tr><td>Superfiltering</td><td class="negative">0.29</td><td class="negative">0.22</td><td class="negative">0.43</td><td>0.31</td><td class="positive">0.71</td><td class="positive">0.60</td><td class="positive">0.69</td><td class="best">0.67</td><td class="positive">0.52</td><td class="positive">0.52</td><td class="positive">0.41</td><td>0.48</td></tr>
+                <tr><td>FineWebEdu</td><td class="positive">0.18</td><td class="positive">0.55</td><td class="positive">0.29</td><td>0.34</td><td class="negative">0.23</td><td class="positive">0.16</td><td class="positive">0.48</td><td>0.13</td><td class="positive">0.57</td><td class="negative">0.22</td><td class="positive">0.59</td><td>0.31</td></tr>
+                <tr><td>PairQual</td><td class="positive">0.44</td><td class="positive">0.71</td><td class="positive">0.53</td><td>0.56</td><td class="negative">0.10</td><td class="positive">0.09</td><td class="positive">0.39</td><td>0.13</td><td class="positive">0.63</td><td class="negative">0.28</td><td class="positive">0.61</td><td>0.32</td></tr>
+                <tr><td>Perplexity</td><td class="negative">0.53</td><td class="negative">0.30</td><td class="negative">0.64</td><td>0.49</td><td class="positive">0.56</td><td class="positive">0.59</td><td class="positive">0.35</td><td>0.50</td><td class="positive">0.06</td><td class="positive">0.33</td><td class="positive">0.53</td><td>0.31</td></tr>
+                <tr><td>BERTVendi</td><td class="negative">0.64</td><td class="negative">0.26</td><td class="negative">0.56</td><td>0.49</td><td class="positive">0.33</td><td class="positive">0.79</td><td class="positive">0.23</td><td>0.45</td><td class="positive">0.42</td><td class="positive">0.20</td><td class="positive">0.44</td><td>0.35</td></tr>
+                <tr><td>SimCSEVendi</td><td class="negative">0.47</td><td class="negative">0.09</td><td class="negative">0.50</td><td>0.35</td><td class="positive">0.13</td><td class="positive">0.54</td><td class="positive">0.16</td><td>0.28</td><td class="positive">0.28</td><td class="positive">0.15</td><td class="positive">0.74</td><td>0.39</td></tr>
+                <tr class="group-row"><td colspan="13">Diversity Based</td></tr>
+                <tr><td>Task2Vec</td><td class="positive">0.06</td><td class="positive">0.39</td><td class="negative">0.03</td><td>0.14</td><td class="negative">0.26</td><td class="positive">0.20</td><td class="positive">0.29</td><td>0.08</td><td class="positive">0.12</td><td class="negative">0.12</td><td class="positive">0.91</td><td>0.30</td></tr>
+                <tr><td>MTLD</td><td class="positive">0.27</td><td class="positive">0.48</td><td class="positive">0.23</td><td>0.33</td><td class="positive">0.17</td><td class="positive">0.47</td><td class="positive">0.37</td><td>0.34</td><td class="positive">0.71</td><td class="positive">0.26</td><td class="positive">0.59</td><td class="best">0.52</td></tr>
+                <tr><td>HD-D</td><td class="positive">0.20</td><td class="positive">0.55</td><td class="positive">0.16</td><td>0.30</td><td class="positive">0.15</td><td class="positive">0.48</td><td class="positive">0.40</td><td>0.34</td><td class="positive">0.45</td><td class="positive">0.03</td><td class="positive">0.84</td><td>0.44</td></tr>
+                <tr><td>Ngram</td><td class="positive">0.12</td><td class="positive">0.54</td><td class="positive">0.18</td><td>0.28</td><td class="negative">0.02</td><td class="positive">0.50</td><td class="positive">0.42</td><td>0.30</td><td class="positive">0.54</td><td class="negative">0.01</td><td class="positive">0.66</td><td>0.40</td></tr>
+                <tr><td>Deita-Complexity</td><td class="negative">0.10</td><td class="negative">0.02</td><td class="negative">0.09</td><td>0.07</td><td class="positive">0.57</td><td class="positive">0.06</td><td class="positive">0.44</td><td>0.36</td><td class="positive">0.55</td><td class="positive">0.01</td><td class="positive">0.25</td><td>0.27</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </details>
+
+      <div class="columns is-centered" style="margin-top: 1.5rem;">
+        <div class="column is-11">
+          <div class="table-card">
+            <div class="table-header">
+              <div>
+                <h4 class="title is-5">Main Observations</h4>
+                <p>Key empirical findings from both benchmark tracks.</p>
+              </div>
+            </div>
+            <div class="columns">
+              <div class="column">
+                <div class="paper-card finding-card">
+                  <h4 class="title is-5">Evaluation must be end-to-end</h4>
+                  <p>
+                    Constructed data can improve, plateau, or degrade performance depending on the domain, base model,
+                    and alignment of the synthesized data.
+                  </p>
+                </div>
+              </div>
+              <div class="column">
+                <div class="paper-card finding-card">
+                  <h4 class="title is-5">Agentic construction is promising</h4>
+                  <p>
+                    Agents can decompose corpus-level data preparation into reading, extraction, filtering,
+                    reformulation, and verification steps.
+                  </p>
+                </div>
+              </div>
+              <div class="column">
+                <div class="paper-card finding-card">
+                  <h4 class="title is-5">No metric is universal</h4>
+                  <p>
+                    DAS strongly predicts utility in several domains, while Finance and Law reveal the limits of a
+                    universal data quality metric.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <p class="small-note">
+              Green cells highlight strongest values in the corresponding table or block. Yellow cells mark notable
+              second-best or competitive values. Correlation tables preserve the paper’s sign convention for each metric.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="bibtex">
+    <div class="container is-max-desktop content">
+      <h2 class="title section-title">BibTeX</h2>
+      <pre class="bibtex"><code>@misc{liang2026dataprepbench,
+  title        = {DataPrep-Bench: Benchmarking LLMs as Training Data Preparators},
+  author       = {Hao Liang and Qifeng Cai and Yibo Lin and Jianzhuo Du and Qifeng Xia and Sizhe Qiu and Linzhuang Sun and Meiyi Qiang and Zhaoyang Han and Xiaochen Ma and Bohan Zeng and Ruichuan An and Conghui He and Weinan E and Wentao Zhang},
   year         = {2026},
-  note         = {Paper coming soon},
-  url          = {https://github.com/TechNomad-ds/text2qa-builder}
-}</pre>
-        <button class="copy-btn" id="copy-citation">Copy</button>
-      </div>
+  url          = {https://datapreparationbench.github.io/}
+}</code></pre>
     </div>
   </section>
 
   <footer class="footer">
-    <div class="container footer-inner">
-      <div>Data Preparation Bench · public project page draft</div>
-      <div>GitHub · Paper coming soon</div>
+    <div class="container">
+      <div class="content has-text-centered">
+        <p>
+          Website for DataPrep-Bench. Replace placeholder paper links, author links, and the framework figure before release.
+        </p>
+      </div>
     </div>
   </footer>
 
   <script>
-    const chartText = () => getComputedStyle(document.documentElement).getPropertyValue('--text').trim();
-    const chartMuted = () => getComputedStyle(document.documentElement).getPropertyValue('--muted').trim();
-    const chartBorder = () => getComputedStyle(document.documentElement).getPropertyValue('--border').trim();
-
-    const methods = [
-      {
-        id: 'qwen-dolly',
-        label: 'Qwen + Dolly',
-        law: [0.3895,0.711,0.5616,0.3102,0.9024,0.2679,0.3856,0.9565],
-        medicine: [0.1494,0.3492,0.604,0.5976,0.5031,0.5962,0.619,0.6364,0.5766,0.5542,0.6811,0.6336,0.5598,0.5851,0.4561],
-        finance: ['48.57%','52.48%',0.5448]
-      },
-      {
-        id: 'law-claude-detiled-dolly',
-        label: 'Claude Detailed + Dolly',
-        law: [0.3474,0.5787,0.4943,0.6912,0.8875,0.292,0.1908,0.871],
-        medicine: [0.1773,0.3204,0.4775,0.4605,0.4167,0.5,0.5442,0.4924,0.4595,0.4217,0.5282,0.4698,0.4348,0.5213,0.4035],
-        finance: ['41.43%','40.59%',0.5333]
-      },
-      {
-        id: 'law-claude-simply-dolly',
-        label: 'Claude Simple + Dolly',
-        law: [0.4421,0.7105,0.5049,0.65,0.9512,0.2633,0.234,0.9676],
-        medicine: [0.1661,0.2199,0.5434,0.5392,0.437,0.5128,0.5782,0.5985,0.5405,0.5301,0.6213,0.5474,0.4891,0.5638,0.4211],
-        finance: ['32.38%','39.60%',0.5379]
-      },
-      {
-        id: 'law-gemini-detiled-dolly',
-        label: 'Gemini Detailed + Dolly',
-        law: [0.2526,0.6413,0.5181,0.6282,0.8774,0.2678,0.3108,0.9731],
-        medicine: [0.1806,0.3253,0.5643,0.5638,0.4906,0.5641,0.551,0.6212,0.5405,0.4578,0.6279,0.5647,0.538,0.5638,0.4386],
-        finance: ['46.67%','42.57%',0.4897]
-      },
-      {
-        id: 'law-gemini-simply-dolly',
-        label: 'Gemini Simple + Dolly',
-        law: [0.4737,0.5732,0.5681,0.356,0.9018,0.2812,0.5092,0.8759],
-        medicine: [0.1583,0.4158,0.6343,0.6362,0.5199,0.6538,0.7007,0.5909,0.5946,0.5663,0.7375,0.6422,0.587,0.6064,0.4912],
-        finance: ['53.33%','52.48%',0.554]
-      },
-      {
-        id: 'law-gpt5.2-detiled-dolly',
-        label: 'GPT-5.2 Detailed + Dolly',
-        law: [0.4421,0.6468,0.4704,0.669,0.7158,0.2705,0.2656,0.9241],
-        medicine: [0.1472,0.1808,0.5789,0.61,0.4239,0.5192,0.5714,0.5985,0.6486,0.494,0.6678,0.5776,0.5543,0.5426,0.5263],
-        finance: ['39.52%','43.56%',0.5425]
-      },
-      {
-        id: 'law-gpt5.2-simply-dolly',
-        label: 'GPT-5.2 Simple + Dolly',
-        law: [0.4632,0.5803,0.6675,0.4574,0.9146,0.26,0.408,0.8897],
-        medicine: [0.1472,0.2144,0.5904,0.6005,0.4946,0.5705,0.6259,0.5758,0.5495,0.5181,0.6645,0.5733,0.5272,0.5532,0.6316],
-        finance: ['39.05%','39.60%',0.5103]
-      }
-    ];
-
-    const lawHeaders = ['Method','abercrombie','hearsay','personal_jurisdiction','ucc_v_common_law','contract_qa','eurlex','ledgar','unfair_tos'];
-    const medicineHeaders = ['Method','MCR-acc','MCR-recall','oracle_diagnose','Macro body','Macro disorder','Brain','Digestive','Musculoskeletal','Cardiovascular','Respiratory','Cancer','Infection','Genetics','Injury','Metabolic'];
-    const financeHeaders = ['Method','CPA','FinEval','XFinBench'];
-
-    function parseMaybePercent(v) {
-      return typeof v === 'string' && v.endsWith('%') ? parseFloat(v) / 100 : Number(v);
-    }
-    function avg(arr) {
-      return arr.reduce((a, b) => a + b, 0) / arr.length;
-    }
-    function fmt(v) {
-      if (typeof v === 'string') return v;
-      return Number(v).toFixed(4);
-    }
-
-    const summary = methods.map(m => {
-      const law = avg(m.law);
-      const medicine = avg(m.medicine);
-      const finance = avg(m.finance.map(parseMaybePercent));
-      const overall = avg([law, medicine, finance]);
-      return { ...m, lawAvg: law, medicineAvg: medicine, financeAvg: finance, overall };
-    }).sort((a, b) => b.overall - a.overall);
-
-    function renderLeaderboard() {
-      const tbody = document.getElementById('leaderboard-data');
-      tbody.innerHTML = summary.map((row, idx) => `
-        <tr>
-          <td><span class="rank-badge">${idx + 1}</span></td>
-          <td>${row.label}</td>
-          <td class="score-strong">${row.overall.toFixed(4)}</td>
-          <td>${row.lawAvg.toFixed(4)}</td>
-          <td>${row.medicineAvg.toFixed(4)}</td>
-          <td>${row.financeAvg.toFixed(4)}</td>
-        </tr>
-      `).join('');
-    }
-
-    function renderDetail(domain) {
-      const table = document.getElementById('detail-table');
-      let headers = [];
-      let rows = [];
-      if (domain === 'law') {
-        headers = lawHeaders;
-        rows = methods.map(m => [m.label, ...m.law]);
-      } else if (domain === 'medicine') {
-        headers = medicineHeaders;
-        rows = methods.map(m => [m.label, ...m.medicine]);
-      } else {
-        headers = financeHeaders;
-        rows = methods.map(m => [m.label, ...m.finance]);
-      }
-      table.innerHTML = `
-        <thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead>
-        <tbody>${rows.map(r => `<tr>${r.map(c => `<td>${fmt(c)}</td>`).join('')}</tr>`).join('')}</tbody>
-      `;
-    }
-
-    let overallChart, domainChart;
-
-    function chartCommon() {
-      return {
-        color: chartText(),
-        grid: chartBorder(),
-        muted: chartMuted()
-      };
-    }
-
-    function buildCharts() {
-      if (overallChart) overallChart.destroy();
-      if (domainChart) domainChart.destroy();
-
-      const colors = chartCommon();
-      overallChart = new Chart(document.getElementById('overallChart'), {
-        type: 'bar',
-        data: {
-          labels: summary.map(d => d.label),
-          datasets: [{
-            label: 'Overall',
-            data: summary.map(d => d.overall),
-            backgroundColor: summary.map((_, i) => i === 0 ? '#2563eb' : '#9ab8ff'),
-            borderRadius: 8,
-            barThickness: 22
-          }]
-        },
-        options: {
-          indexAxis: 'y',
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            x: {
-              min: 0.35,
-              max: 0.60,
-              ticks: { color: colors.muted },
-              grid: { color: colors.grid }
-            },
-            y: {
-              ticks: { color: colors.color },
-              grid: { display: false }
-            }
-          }
-        }
+    document.addEventListener("DOMContentLoaded", () => {
+      const burgers = Array.prototype.slice.call(document.querySelectorAll(".navbar-burger"), 0);
+      burgers.forEach((burger) => {
+        burger.addEventListener("click", () => {
+          const target = burger.dataset.target;
+          const menu = document.getElementById(target);
+          burger.classList.toggle("is-active");
+          menu.classList.toggle("is-active");
+        });
       });
-
-      domainChart = new Chart(document.getElementById('domainChart'), {
-        type: 'bar',
-        data: {
-          labels: summary.map(d => d.label),
-          datasets: [
-            { label: 'Law', data: summary.map(d => d.lawAvg), backgroundColor: '#2563eb', borderRadius: 6 },
-            { label: 'Medicine', data: summary.map(d => d.medicineAvg), backgroundColor: '#6fa0ff', borderRadius: 6 },
-            { label: 'Finance', data: summary.map(d => d.financeAvg), backgroundColor: '#b6d0ff', borderRadius: 6 }
-          ]
-        },
-        options: {
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              labels: { color: colors.color }
-            }
-          },
-          scales: {
-            x: {
-              ticks: { color: colors.muted, maxRotation: 35, minRotation: 35 },
-              grid: { display: false }
-            },
-            y: {
-              min: 0.35,
-              max: 0.65,
-              ticks: { color: colors.muted },
-              grid: { color: colors.grid }
-            }
-          }
-        }
-      });
-    }
-
-    renderLeaderboard();
-    renderDetail('law');
-    buildCharts();
-
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        renderDetail(btn.dataset.domain);
-      });
-    });
-
-    const hamburgerBtn = document.getElementById('hamburger-btn');
-    const navLinks = document.getElementById('nav-links');
-    hamburgerBtn?.addEventListener('click', () => navLinks.classList.toggle('open'));
-
-    const html = document.documentElement;
-    const savedTheme = localStorage.getItem('dpb-theme');
-    if (savedTheme) html.setAttribute('data-theme', savedTheme);
-    document.getElementById('theme-toggle').addEventListener('click', () => {
-      const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-      html.setAttribute('data-theme', next);
-      localStorage.setItem('dpb-theme', next);
-      buildCharts();
-    });
-
-    document.getElementById('copy-citation').addEventListener('click', async () => {
-      const text = document.getElementById('citation-text').innerText;
-      try {
-        await navigator.clipboard.writeText(text);
-        document.getElementById('copy-citation').innerText = 'Copied';
-        setTimeout(() => document.getElementById('copy-citation').innerText = 'Copy', 1200);
-      } catch (e) {
-        document.getElementById('copy-citation').innerText = 'Copy failed';
-        setTimeout(() => document.getElementById('copy-citation').innerText = 'Copy', 1200);
-      }
     });
   </script>
 </body>
+
 </html>
