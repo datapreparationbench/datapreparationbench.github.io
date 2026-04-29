@@ -1,1665 +1,1259 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="utf-8">
-  <meta name="description" content="DataPrep-Bench: Benchmarking LLMs as Training Data Preparators.">
-  <meta name="keywords" content="DataPrep-Bench, LLM-driven Data Preparation, Data Construction, Data Quality Evaluation, Data-Construction-Skill, Distributional Alignment Score, DAS, MMD">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>DataPrep-Bench</title>
-
-  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
-  <style>
-    :root {
-      --primary: #1f5f8b;
-      --primary-dark: #123d64;
-      --primary-soft: #eef7fd;
-      --accent: #36a77a;
-      --accent-soft: #edf9f3;
-      --warning-soft: #fff7e6;
-      --ink: #18212f;
-      --muted: #64748b;
-      --line: #e5eaf1;
-      --paper: #ffffff;
-      --bg: #fbfcfe;
-      --soft-blue: #f4f9ff;
-      --shadow: 0 12px 36px rgba(15, 23, 42, 0.06);
-    }
-
-    html {
-      scroll-behavior: smooth;
-      background: var(--bg);
-    }
-
-    body {
-      font-family: "Noto Sans", "Google Sans", Arial, sans-serif;
-      color: var(--ink);
-      background: var(--bg);
-    }
-
-    a {
-      color: var(--primary);
-    }
-
-    a:hover {
-      color: var(--primary-dark);
-    }
-
-    .navbar {
-      box-shadow: 0 1px 0 rgba(15, 23, 42, 0.06);
-      background: rgba(255, 255, 255, 0.94);
-      backdrop-filter: blur(10px);
-      position: sticky;
-      top: 0;
-      z-index: 20;
-    }
-
-    .navbar-item {
-      font-size: 0.94rem;
-      color: #334155;
-    }
-
-    .publication-title {
-      font-family: "Google Sans", "Noto Sans", sans-serif;
-      letter-spacing: -0.04em;
-      line-height: 1.05;
-    }
-
-    .title-gradient {
-      background: linear-gradient(90deg, #123d64, #1f5f8b, #36a77a);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .hero {
-      background:
-        radial-gradient(circle at 10% 10%, rgba(31, 95, 139, 0.13), transparent 28%),
-        radial-gradient(circle at 88% 16%, rgba(54, 167, 122, 0.12), transparent 30%),
-        linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
-      border-bottom: 1px solid var(--line);
-    }
-
-    .hero-body {
-      padding-top: 4.7rem;
-      padding-bottom: 3.7rem;
-    }
-
-    .subtitle-compact {
-      max-width: 990px;
-      margin: 1.1rem auto 0 auto;
-      color: #475569;
-      line-height: 1.68;
-    }
-
-    .publication-authors {
-      margin-top: 1.15rem;
-      color: #334155;
-    }
-
-    .publication-authors .author-block {
-      display: inline-block;
-      margin: 0 0.12rem;
-    }
-
-    .affiliation-block {
-      display: inline-block;
-      margin: 0.15rem 0.35rem;
-      color: #475569;
-    }
-
-    .button.is-dark {
-      background: #172033;
-      border-color: #172033;
-      transition: all 0.18s ease;
-    }
-
-    .button.is-dark:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 9px 24px rgba(23, 32, 51, 0.16);
-    }
-
-    .link-block {
-      display: inline-block;
-      margin: 0.25rem;
-    }
-
-    .section {
-      padding-top: 3.9rem;
-      padding-bottom: 3.9rem;
-    }
-
-    .section-title {
-      font-family: "Google Sans", "Noto Sans", sans-serif;
-      letter-spacing: -0.028em;
-      margin-bottom: 1.1rem !important;
-    }
-
-    .section-kicker {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.45rem;
-      color: var(--primary);
-      background: var(--primary-soft);
-      border: 1px solid rgba(31, 95, 139, 0.14);
-      border-radius: 999px;
-      padding: 0.35rem 0.75rem;
-      font-size: 0.84rem;
-      font-weight: 800;
-      margin-bottom: 1rem;
-    }
-
-    .content p {
-      line-height: 1.78;
-      color: #334155;
-    }
-
-    .lead {
-      font-size: 1.05rem;
-      line-height: 1.78;
-      color: #334155;
-    }
-
-    .paper-card {
-      background: var(--paper);
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
-      padding: 1.35rem;
-      height: 100%;
-    }
-
-    .paper-card h3,
-    .paper-card h4 {
-      color: #111827;
-      margin-bottom: 0.55rem;
-    }
-
-    .paper-card p {
-      color: #475569;
-      font-size: 0.98rem;
-      line-height: 1.65;
-    }
-
-    .icon-badge {
-      width: 2.55rem;
-      height: 2.55rem;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 14px;
-      background: var(--primary-soft);
-      color: var(--primary);
-      margin-bottom: 0.85rem;
-      font-size: 1.05rem;
-    }
-
-    .teaser-card {
-      background: var(--paper);
-      border: 1px solid var(--line);
-      border-radius: 20px;
-      box-shadow: var(--shadow);
-      padding: 1rem;
-    }
-
-    .teaser-card img {
-      width: 100%;
-      display: block;
-      border-radius: 12px;
-      border: 1px solid #e9eef5;
-      background: #f8fafc;
-    }
-
-    .caption {
-      color: var(--muted);
-      font-size: 0.92rem;
-      margin-top: 0.85rem;
-      line-height: 1.55;
-    }
-
-    .stat-strip {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 1rem;
-      margin-top: 1.5rem;
-    }
-
-    .stat-item {
-      background: #ffffff;
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 1rem;
-      text-align: center;
-      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.03);
-    }
-
-    .stat-number {
-      font-family: "Google Sans", "Noto Sans", sans-serif;
-      color: var(--primary);
-      font-weight: 900;
-      font-size: 1.75rem;
-      line-height: 1.1;
-    }
-
-    .stat-label {
-      color: var(--muted);
-      font-size: 0.88rem;
-      margin-top: 0.35rem;
-    }
-
-    .method-flow {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 1rem;
-      margin-top: 1.4rem;
-    }
-
-    .flow-step {
-      border: 1px solid var(--line);
-      background: #ffffff;
-      border-radius: 18px;
-      padding: 1.25rem;
-      text-align: left;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .flow-step::after {
-      content: "";
-      position: absolute;
-      right: -24px;
-      top: -24px;
-      width: 76px;
-      height: 76px;
-      border-radius: 999px;
-      background: rgba(31, 95, 139, 0.07);
-    }
-
-    .flow-step .step-index {
-      color: var(--primary);
-      font-weight: 800;
-      font-size: 0.84rem;
-      margin-bottom: 0.4rem;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-    }
-
-    .flow-step p {
-      color: #475569;
-      line-height: 1.65;
-      font-size: 0.95rem;
-    }
-
-    .tag-soft {
-      display: inline-block;
-      background: var(--primary-soft);
-      color: var(--primary);
-      border-radius: 999px;
-      padding: 0.28rem 0.7rem;
-      font-size: 0.82rem;
-      font-weight: 800;
-      margin: 0.16rem;
-    }
-
-    .tag-accent {
-      background: var(--accent-soft);
-      color: #18845c;
-    }
-
-    .mini-list {
-      margin-top: 0.75rem;
-      color: #475569;
-      line-height: 1.75;
-    }
-
-    .mini-list li {
-      margin-bottom: 0.25rem;
-    }
-
-    .table-card {
-      background: #ffffff;
-      border: 1px solid var(--line);
-      border-radius: 20px;
-      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.045);
-      padding: 1rem;
-      margin-top: 1.2rem;
-      overflow: hidden;
-    }
-
-    .table-header {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 1rem;
-      padding: 0.35rem 0.25rem 1rem 0.25rem;
-      border-bottom: 1px solid #edf2f7;
-      margin-bottom: 0.8rem;
-    }
-
-    .table-header h4 {
-      margin: 0;
-    }
-
-    .table-header p {
-      margin: 0.25rem 0 0 0;
-      color: var(--muted);
-      font-size: 0.92rem;
-      line-height: 1.5;
-    }
-
-    .table-container {
-      overflow-x: auto;
-      border-radius: 14px;
-    }
-
-    .nice-table {
-      width: 100%;
-      border-collapse: separate;
-      border-spacing: 0;
-      font-size: 0.9rem;
-      min-width: 980px;
-    }
-
-    .nice-table.compact {
-      min-width: 760px;
-    }
-
-    .nice-table.wide {
-      min-width: 1380px;
-    }
-
-    .nice-table.extra-wide {
-      min-width: 1900px;
-    }
-
-    .nice-table th {
-      background: #f4f8fc;
-      color: #1e3a56;
-      font-weight: 800;
-      text-align: center;
-      border-bottom: 1px solid #dce8f3;
-      padding: 0.72rem 0.58rem;
-      white-space: nowrap;
-    }
-
-    .nice-table td {
-      border-bottom: 1px solid #edf2f7;
-      padding: 0.66rem 0.58rem;
-      text-align: center;
-      color: #334155;
-      white-space: nowrap;
-    }
-
-    .nice-table td:first-child,
-    .nice-table th:first-child {
-      text-align: left;
-      position: sticky;
-      left: 0;
-      background: inherit;
-      z-index: 2;
-      box-shadow: 1px 0 0 #edf2f7;
-    }
-
-    .nice-table thead th:first-child {
-      background: #f4f8fc;
-      z-index: 3;
-    }
-
-    .nice-table tbody tr:hover td {
-      background: #fbfdff;
-    }
-
-    .nice-table .group-row td {
-      background: #eaf4fb;
-      color: #1f5f8b;
-      font-weight: 800;
-      text-align: center;
-      letter-spacing: 0.02em;
-    }
-
-    .best {
-      font-weight: 900;
-      color: #17663f !important;
-      background: #eaf8f0 !important;
-      border-radius: 8px;
-    }
-
-    .second {
-      font-weight: 800;
-      color: #8a5b00 !important;
-      background: #fff7e6 !important;
-      border-radius: 8px;
-    }
-
-    .muted-cell {
-      color: #94a3b8 !important;
-    }
-
-    .negative {
-      color: #17663f !important;
-      background: #edf9f3 !important;
-      font-weight: 700;
-    }
-
-    .positive {
-      color: #9a5a00 !important;
-      background: #fff7e6 !important;
-      font-weight: 700;
-    }
-
-    .small-note {
-      color: var(--muted);
-      font-size: 0.86rem;
-      line-height: 1.55;
-      margin-top: 0.75rem;
-    }
-
-    details.result-details {
-      margin-top: 1.3rem;
-    }
-
-    details.result-details summary {
-      cursor: pointer;
-      list-style: none;
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      background: linear-gradient(180deg, #ffffff, #f8fbff);
-      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.035);
-      padding: 1rem 1.2rem;
-      font-weight: 800;
-      color: #1e3a56;
-    }
-
-    details.result-details summary::-webkit-details-marker {
-      display: none;
-    }
-
-    details.result-details summary::after {
-      content: "＋";
-      float: right;
-      color: var(--primary);
-    }
-
-    details.result-details[open] summary::after {
-      content: "－";
-    }
-
-    .finding-card {
-      border-left: 4px solid var(--primary);
-    }
-
-    .bibtex {
-      background: #111827;
-      color: #e5e7eb;
-      border-radius: 14px;
-      padding: 1.2rem;
-      overflow-x: auto;
-      font-size: 0.9rem;
-    }
-
-    .footer {
-      background: #ffffff;
-      border-top: 1px solid var(--line);
-      padding: 2.6rem 1.5rem;
-    }
-
-    .footer p {
-      color: #64748b;
-      font-size: 0.92rem;
-    }
-
-    @media screen and (max-width: 768px) {
-      .hero-body {
-        padding-top: 3rem;
-      }
-
-      .title.is-1 {
-        font-size: 2.25rem;
-      }
-
-      .stat-strip,
-      .method-flow {
-        grid-template-columns: 1fr;
-      }
-
-      .section {
-        padding-top: 2.8rem;
-        padding-bottom: 2.8rem;
-      }
-
-      .table-header {
-        display: block;
-      }
-    }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DataPrep-Bench: Benchmarking LLMs as Training Data Preparators</title>
+  <meta name="description" content="DataPrep-Bench is the first comprehensive benchmark that jointly evaluates LLM-driven data construction and data quality evaluation under a unified, downstream-grounded protocol." />
+  <meta name="keywords" content="DataPrep-Bench, LLM, data preparation, data construction, data quality evaluation, benchmark, MMD, DAS, Data-Construction-Skill, SFT, supervised fine-tuning" />
+  <meta name="author" content="Hao Liang, Qifeng Cai, Yibo Lin, Jianzhuo Du, et al." />
+  <meta name="theme-color" content="#1e3a8a" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="DataPrep-Bench: Benchmarking LLMs as Training Data Preparators" />
+  <meta property="og:description" content="The first comprehensive benchmark for LLM-driven training data preparation, covering both data construction and data quality evaluation." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="assets/Frame.png" />
+  <meta property="og:url" content="https://datapreparationbench.github.io/" />
+  <meta property="og:site_name" content="DataPrep-Bench" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="DataPrep-Bench: Benchmarking LLMs as Training Data Preparators" />
+  <meta name="twitter:description" content="A unified, downstream-grounded benchmark for LLM-driven training data preparation." />
+  <meta name="twitter:image" content="assets/Frame.png" />
+
+  <!-- Canonical URL -->
+  <link rel="canonical" href="https://datapreparationbench.github.io/" />
+
+  <!-- Favicon (inline SVG: amber 'D' on navy disc, no extra HTTP request) -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><circle cx='32' cy='32' r='30' fill='%231e3a8a'/><text x='32' y='44' font-family='Georgia,serif' font-size='38' font-weight='700' fill='%23fbbf24' text-anchor='middle'>D</text></svg>" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+  <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
-  <nav class="navbar" role="navigation" aria-label="main navigation">
-    <div class="navbar-brand">
-      <a class="navbar-item" href="#top" aria-label="home">
-        <span class="icon"><i class="fas fa-home"></i></span>
-      </a>
-      <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="main-navbar">
-        <span aria-hidden="true"></span>
-        <span aria-hidden="true"></span>
-        <span aria-hidden="true"></span>
-      </a>
-    </div>
 
-    <div id="main-navbar" class="navbar-menu">
-      <div class="navbar-start" style="flex-grow: 1; justify-content: center;">
-        <a class="navbar-item" href="#background">Background</a>
-        <a class="navbar-item" href="#benchmark">Benchmark</a>
-        <a class="navbar-item" href="#evaluation">Evaluation</a>
-        <a class="navbar-item" href="#methods">Methods</a>
-        <a class="navbar-item" href="#results">Results</a>
-        <a class="navbar-item" href="#bibtex">BibTeX</a>
-      </div>
+  <!-- Skip-to-content for keyboard users -->
+  <a class="skip-link" href="#abstract">Skip to content</a>
+
+  <!-- Reading-progress bar (driven by script.js) -->
+  <div class="read-progress" id="read-progress" aria-hidden="true"></div>
+
+  <!-- ========= NAV ========= -->
+  <nav class="nav" aria-label="Section navigation">
+    <div class="nav-inner">
+      <a href="#top" class="nav-brand">DataPrep-Bench</a>
+      <ul class="nav-links">
+        <li><a href="#abstract">Abstract</a></li>
+        <li><a href="#overview">Overview</a></li>
+        <li><a href="#tracks">Tracks</a></li>
+        <li><a href="#methods">Methods</a></li>
+        <li><a href="#experiments">Setup</a></li>
+        <li><a href="#track1-results">Track 1</a></li>
+        <li><a href="#track2-results">Track 2</a></li>
+        <li><a href="#findings">Findings</a></li>
+        <li><a href="#bibtex">BibTeX</a></li>
+      </ul>
     </div>
   </nav>
 
-  <section class="hero" id="top">
-    <div class="hero-body">
-      <div class="container is-max-desktop has-text-centered">
-        <h1 class="title is-1 publication-title is-bold">
-          <span class="title-gradient" style="font-variant: small-caps;">DataPrep-Bench</span>
-        </h1>
-        <h2 class="title is-3 publication-title" style="font-weight: 500; color: #334155;">
-          Benchmarking LLMs as Training Data Preparators
-        </h2>
+  <!-- ========= HERO ========= -->
+  <header class="hero" id="top">
+    <div class="container">
+      <div class="venue-tag">A Unified Benchmark for LLM-Driven Training Data Preparation</div>
+      <h1 class="title">
+        <span class="title-accent">DataPrep-Bench:</span><br/>
+        Benchmarking LLMs as Training Data Preparators
+      </h1>
 
-        <p class="subtitle-compact is-size-5">
-          A unified benchmark for evaluating whether LLMs, agents, data workflows, and scoring functions can prepare
-          training data that actually improves downstream model performance.
-        </p>
+      <ul class="authors">
+        <li class="author">Hao Liang<sup class="author-mark">*&dagger;</sup></li>
+        <li class="author">Qifeng Cai<sup class="author-mark">*</sup></li>
+        <li class="author">Yibo Lin<sup class="author-mark">*</sup></li>
+        <li class="author">Jianzhuo Du<sup class="author-mark">*</sup></li>
+        <li class="author">Qifeng Xia</li>
+        <li class="author">Sizhe Qiu</li>
+        <li class="author">Linzhuang Sun</li>
+        <li class="author">Meiyi Qiang</li>
+        <li class="author">Zhaoyang Han</li>
+        <li class="author">Xiaochen Ma</li>
+        <li class="author">Bohan Zeng</li>
+        <li class="author">Ruichuan An</li>
+        <li class="author">Conghui He</li>
+        <li class="author">Weinan E</li>
+        <li class="author">Wentao Zhang<sup class="author-mark">&Dagger;</sup></li>
+      </ul>
 
-        <div class="is-size-5 publication-authors">
-          <span class="author-block"><a href="#">Hao Liang</a><sup>*†</sup>,</span>
-          <span class="author-block"><a href="#">Qifeng Cai</a><sup>*</sup>,</span>
-          <span class="author-block"><a href="#">Yibo Lin</a><sup>*</sup>,</span>
-          <span class="author-block"><a href="#">Jianzhuo Du</a><sup>*</sup>,</span>
-          <span class="author-block"><a href="#">Qifeng Xia</a>,</span>
-          <span class="author-block"><a href="#">Sizhe Qiu</a>,</span>
-          <span class="author-block"><a href="#">Linzhuang Sun</a>,</span>
-          <span class="author-block"><a href="#">Meiyi Qiang</a>,</span>
-          <span class="author-block"><a href="#">Zhaoyang Han</a>,</span>
-          <span class="author-block"><a href="#">Xiaochen Ma</a>,</span>
-          <span class="author-block"><a href="#">Bohan Zeng</a>,</span>
-          <span class="author-block"><a href="#">Ruichuan An</a>,</span>
-          <span class="author-block"><a href="#">Conghui He</a>,</span>
-          <span class="author-block"><a href="#">Weinan E</a>,</span>
-          <span class="author-block"><a href="#">Wentao Zhang</a><sup>‡</sup></span>
-        </div>
-
-        <div class="is-size-6 publication-authors" style="margin-top: 0.8rem;">
-          <span class="affiliation-block">Peking University</span>
-          <span class="affiliation-block">Institute for Advanced Algorithms Research, Shanghai</span>
-          <span class="affiliation-block">OriginHub Technology</span>
-          <span class="affiliation-block">Zhongguancun Academy</span>
-        </div>
-
-        <div class="is-size-7" style="margin-top: 0.6rem; color: #64748b;">
-          <span>* Equal contribution</span> &nbsp;·&nbsp;
-          <span>† Project leader</span> &nbsp;·&nbsp;
-          <span>‡ Corresponding author</span>
-        </div>
-
-        <div class="publication-links" style="margin-top: 1.5rem;">
-          <span class="link-block">
-            <a href="#" class="external-link button is-normal is-rounded is-dark">
-              <span class="icon"><i class="fas fa-file-pdf"></i></span>
-              <span>Paper</span>
-            </a>
-          </span>
-          <span class="link-block">
-            <a href="https://github.com/haolpku/Data-Preparation-Bench" class="external-link button is-normal is-rounded is-dark">
-              <span class="icon"><i class="fab fa-github"></i></span>
-              <span>Code</span>
-            </a>
-          </span>
-          <span class="link-block">
-            <a href="https://huggingface.co/datasets/lhpku20010120/Data-Prep-Bench" class="external-link button is-normal is-rounded is-dark">
-              <span class="icon"><i class="fas fa-database"></i></span>
-              <span>Dataset & Demo</span>
-            </a>
-          </span>
-          <span class="link-block">
-            <a href="#results" class="external-link button is-normal is-rounded is-dark">
-              <span class="icon"><i class="fa fa-chart-line"></i></span>
-              <span>Results</span>
-            </a>
-          </span>
+      <div class="affiliations">
+        <div class="aff-line">Peking University &nbsp;·&nbsp; Institute for Advanced Algorithms Research, Shanghai &nbsp;·&nbsp; OriginHub Technology &nbsp;·&nbsp; Zhongguancun Academy</div>
+        <div class="contrib-note">
+          <sup>*</sup>&nbsp;Equal Contribution &nbsp;·&nbsp; <sup>&dagger;</sup>&nbsp;Project Leader &nbsp;·&nbsp; <sup>&Dagger;</sup>&nbsp;Corresponding Author (<a href="mailto:wentao.zhang@pku.edu.cn">wentao.zhang@pku.edu.cn</a>)
         </div>
       </div>
-    </div>
-  </section>
 
-  <section class="section">
-    <div class="container is-max-desktop">
-      <div class="teaser-card">
-        <img src="./static/images/dataprep_framework.png" alt="Overall framework of DataPrep-Bench">
-        <p class="caption has-text-centered">
-          Overall framework of DataPrep-Bench. Replace this placeholder with the framework figure from the paper.
+      <div class="cta-row">
+        <a class="cta cta-dark cta-soon" href="#" onclick="event.preventDefault();" aria-disabled="true" title="Paper PDF — coming soon">
+          <i class="fas fa-file-pdf"></i><span>Paper</span><span class="cta-badge">Soon</span>
+        </a>
+        <a class="cta cta-dark" href="https://github.com/haolpku/Data-Preparation-Bench" target="_blank" rel="noopener">
+          <i class="fab fa-github"></i><span>Code</span>
+        </a>
+        <a class="cta cta-dark" href="https://huggingface.co/datasets/lhpku20010120/Data-Prep-Bench" target="_blank" rel="noopener">
+          <i class="fas fa-database"></i><span>Dataset</span>
+        </a>
+        <a class="cta cta-dark" href="https://datapreparationbench.github.io/" target="_blank" rel="noopener">
+          <i class="fas fa-globe"></i><span>Website</span>
+        </a>
+        <a class="cta cta-dark" href="#bibtex">
+          <i class="fas fa-quote-left"></i><span>BibTeX</span>
+        </a>
+      </div>
+
+      <!-- TL;DR -->
+      <div class="tldr">
+        <div class="tldr-tag">TL;DR</div>
+        <p>
+          <strong>DataPrep-Bench</strong> is the first unified, <strong>downstream-grounded</strong> benchmark that jointly evaluates how well LLMs, agents,
+          and data workflows can prepare training data end to end. It covers two complementary tracks — <strong>Data Construction</strong>
+          (transforming raw sources into SFT data) and <strong>Data Quality Evaluation</strong> (predicting downstream utility of candidate datasets) —
+          and ships two strong baselines: <strong>Data-Construction-Skill</strong> (skill-driven agentic construction) and the
+          <strong>Distributional Alignment Score (DAS)</strong> (training-free, MMD-based quality estimator).
         </p>
       </div>
+    </div>
+  </header>
 
-      <div class="stat-strip">
-        <div class="stat-item">
-          <div class="stat-number">2</div>
-          <div class="stat-label">Complementary Tracks</div>
+  <!-- ========= TEASER / KEY STATS ========= -->
+  <section class="teaser">
+    <div class="container">
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-num">2</div>
+          <div class="stat-label">Evaluation Tracks</div>
+          <div class="stat-sub"><span class="nobr">Construction</span> · <span class="nobr">Quality Evaluation</span></div>
         </div>
-        <div class="stat-item">
-          <div class="stat-number">6</div>
-          <div class="stat-label">Evaluation Domains</div>
+        <div class="stat-card">
+          <div class="stat-num">6</div>
+          <div class="stat-label">Domains</div>
+          <div class="stat-sub"><span class="nobr">Math</span> · <span class="nobr">Science</span> · <span class="nobr">Medical</span> · <span class="nobr">Finance</span> · <span class="nobr">Law</span> · <span class="nobr">General</span></div>
         </div>
-        <div class="stat-item">
-          <div class="stat-number">3</div>
-          <div class="stat-label">Base Model Families</div>
+        <div class="stat-card">
+          <div class="stat-num">3</div>
+          <div class="stat-label">Base Models</div>
+          <div class="stat-sub"><span class="nobr">Qwen2.5-7B</span> · <span class="nobr">Llama-3.1-8B</span> · <span class="nobr">Mistral-7B</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">18</div>
+          <div class="stat-label">Quality Metrics</div>
+          <div class="stat-sub"><span class="nobr">Distribution</span> · <span class="nobr">Quality</span> · <span class="nobr">Diversity</span></div>
         </div>
       </div>
     </div>
   </section>
 
-  <section class="section" id="background">
-    <div class="container is-max-widescreen">
-      <div class="columns is-centered has-text-centered">
-        <div class="column is-four-fifths">
-          <span class="section-kicker"><i class="fas fa-seedling"></i> Motivation</span>
-          <h2 class="title is-3 section-title">Why Benchmark LLMs as Data Preparators?</h2>
-          <div class="content has-text-justified">
-            <p class="lead">
-              Training data is a primary driver of LLM capability. As high-quality natural corpora become increasingly
-              scarce, the community is turning to LLMs, agents, and data-centric workflows to produce and curate training
-              data. This raises a foundational question: <b>how well can these systems actually prepare training data
-              end to end?</b>
-            </p>
-            <p>
-              We study this emerging paradigm as <b>LLM-driven data preparation</b>, which consists of two capabilities:
-              <b>data construction</b>, which transforms raw or otherwise non-trainable sources into supervised training
-              data, and <b>data quality evaluation</b>, which predicts the training value of candidate datasets before
-              downstream fine-tuning.
-            </p>
-            <p>
-              Existing work has demonstrated that LLM-driven preparation is feasible, but evaluations are often isolated:
-              different studies use different sources, base models, training settings, and metrics. DataPrep-Bench closes
-              this gap with a unified testbed where agents, workflows, and metrics are compared under shared resources
-              and a common downstream-grounded protocol.
-            </p>
+  <!-- ========= ABSTRACT ========= -->
+  <section id="abstract" class="section">
+    <div class="container narrow">
+      <h2 class="section-title"><span class="section-num">01</span>Abstract</h2>
+      <p class="abstract-body">
+        The quality of training data fundamentally determines the capabilities of large language models (LLMs). As the community
+        increasingly relies on LLMs, agents, and data-centric workflows to produce and curate training corpora, a foundational
+        question emerges: <em>how well can these systems actually prepare training data end to end?</em> Despite the rapid proliferation
+        of LLM-driven data preparation techniques, no unified benchmark exists to systematically measure their effectiveness.
+      </p>
+      <p class="abstract-body">
+        We view LLM-driven data preparation as comprising two complementary capabilities: <strong>data construction</strong>,
+        which transforms raw sources into high-quality training data, and <strong>data quality evaluation</strong>, which predicts the training
+        value of candidate datasets before downstream training. We introduce <strong>DataPrep-Bench</strong>, the first comprehensive
+        benchmark that jointly evaluates both capabilities as first-class targets under a unified, downstream-grounded protocol.
+      </p>
+      <p class="abstract-body">
+        DataPrep-Bench is organized around two tracks. <strong>(1) Data Construction</strong> takes low-quality or otherwise non-trainable sources
+        (e.g., domain books) as input and asks agents or workflows to transform them into supervised training data; the produced data is evaluated
+        end to end by the downstream performance of models fine-tuned on it. We release <strong>Data-Construction-Skill</strong> as a strong baseline.
+        <strong>(2) Data Quality Evaluation</strong> takes mainstream candidate training datasets and produces scalar scores; its goal is to measure
+        whether a scoring function is linearly predictive of downstream utility. We release the <strong>Distributional Alignment Score (DAS)</strong>
+        as a strong baseline. Across multiple domains and architectures, DAS achieves strong overall correlation with downstream
+        performance and outperforms existing quality-, diversity-, and heuristic-based evaluators in most settings.
+      </p>
+    </div>
+  </section>
+
+  <!-- ========= OVERVIEW / FRAMEWORK ========= -->
+  <section id="overview" class="section section-alt">
+    <div class="container">
+      <h2 class="section-title"><span class="section-num">02</span>Framework Overview</h2>
+      <p class="lead">
+        DataPrep-Bench formalizes data preparation under a <strong>unified, downstream-grounded</strong> framework. Both tracks share
+        the same evaluation principle: a data preparation decision is useful only if it leads to <em>better downstream model performance</em>.
+        Concretely, the common reference signal is \( \mathrm{Perf}\bigl(f(\mathcal{X}), \mathcal{T}_k\bigr) \) — the benchmark score
+        of a base model fine-tuned on dataset \(\mathcal{X}\) for domain \(D_k\).
+      </p>
+
+      <!-- Paper framework figure -->
+      <figure class="paper-figure">
+        <img src="assets/Frame.png" alt="Overall framework of DataPrep-Bench" loading="lazy" />
+        <figcaption>Figure 1. The overall framework of DataPrep-Bench. Two complementary tracks share a downstream-grounded evaluation protocol: model utility on held-out benchmarks is the common reference signal.</figcaption>
+      </figure>
+
+      <!-- Domains -->
+      <div class="domain-grid">
+        <div class="domain-pill"><i class="fas fa-square-root-variable"></i> Math</div>
+        <div class="domain-pill"><i class="fas fa-atom"></i> Science</div>
+        <div class="domain-pill"><i class="fas fa-stethoscope"></i> Medical</div>
+        <div class="domain-pill"><i class="fas fa-money-bill-trend-up"></i> Finance</div>
+        <div class="domain-pill"><i class="fas fa-scale-balanced"></i> Law</div>
+        <div class="domain-pill"><i class="fas fa-book-open"></i> General Text</div>
+      </div>
+
+      <!-- Related work / positioning -->
+      <div class="related-work">
+        <h3 class="subsection-title">How DataPrep-Bench differs from prior data benchmarks</h3>
+        <div class="rel-table-wrap">
+          <table class="rel-table">
+            <thead>
+              <tr>
+                <th>Benchmark</th>
+                <th>Target</th>
+                <th>LLM-as-Preparator</th>
+                <th>Construction</th>
+                <th>Quality Eval.</th>
+                <th>Downstream-Grounded</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>DataComp</td>
+                <td>Image–text filtering</td>
+                <td><span class="cell-no">No</span></td>
+                <td><span class="cell-no">—</span></td>
+                <td><span class="cell-partial">Filtering</span></td>
+                <td><span class="cell-yes">Yes</span></td>
+              </tr>
+              <tr>
+                <td>DataComp-LM</td>
+                <td>Text corpus curation</td>
+                <td><span class="cell-no">No</span></td>
+                <td><span class="cell-no">—</span></td>
+                <td><span class="cell-partial">Curation</span></td>
+                <td><span class="cell-yes">Yes</span></td>
+              </tr>
+              <tr>
+                <td>DataPerf</td>
+                <td>Selection / debugging</td>
+                <td><span class="cell-no">No</span></td>
+                <td><span class="cell-no">—</span></td>
+                <td><span class="cell-partial">Selection</span></td>
+                <td><span class="cell-yes">Yes</span></td>
+              </tr>
+              <tr>
+                <td>DCBENCH</td>
+                <td>Tabular tasks</td>
+                <td><span class="cell-no">No</span></td>
+                <td><span class="cell-no">—</span></td>
+                <td><span class="cell-partial">Slice/feature</span></td>
+                <td><span class="cell-yes">Yes</span></td>
+              </tr>
+              <tr>
+                <td>Data-Juicer / DataFlow</td>
+                <td>Modular tooling</td>
+                <td><span class="cell-no">Tooling, no benchmark</span></td>
+                <td><span class="cell-no">—</span></td>
+                <td><span class="cell-no">—</span></td>
+                <td><span class="cell-no">—</span></td>
+              </tr>
+              <tr class="rel-ours">
+                <td><strong>DataPrep-Bench (ours)</strong></td>
+                <td><strong>SFT data preparation</strong></td>
+                <td><span class="cell-yes">LLMs · Workflows · Agents · Skills</span></td>
+                <td><span class="cell-yes">Yes</span></td>
+                <td><span class="cell-yes">Yes</span></td>
+                <td><span class="cell-yes">Yes (end-to-end)</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="caption rel-caption">
+          Existing data benchmarks emphasize curation/selection of pre-existing corpora. DataPrep-Bench is the first to evaluate
+          LLMs/agents <em>as data preparators</em> — covering both <em>construction</em> from raw sources and <em>quality evaluation</em>
+          of candidate datasets, all grounded in end-to-end downstream performance.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========= TRACKS ========= -->
+  <section id="tracks" class="section">
+    <div class="container">
+      <h2 class="section-title"><span class="section-num">03</span>Two Evaluation Tracks</h2>
+
+      <div class="track-grid">
+        <!-- Track 1 -->
+        <div class="track-card track-card-1">
+          <div class="track-header">
+            <div class="track-num">Track&nbsp;1</div>
+            <h3>Data Construction</h3>
           </div>
+          <p class="track-lead">
+            Can LLMs, agents, and workflows transform <strong>raw domain sources</strong> (books, manuals, long-form materials) into useful supervised fine-tuning data?
+          </p>
+
+          <div class="track-eq">
+            \[
+            \mathrm{Score}_{\mathrm{con}}(M, D_k) \;=\; \mathrm{Perf}\!\left( f\!\left(\mathcal{X}_k^{(M)}\right),\; \mathcal{T}_k \right)
+            \]
+          </div>
+
+          <ul class="track-points">
+            <li><strong>Input.</strong> Curated source corpus \( \mathcal{B}_k = \{b_{k,1}, \dots, b_{k,B_k}\} \) — domain books and long-form knowledge in unified Markdown.</li>
+            <li><strong>Output.</strong> Synthesized SFT dataset \( \mathcal{X}_k^{(M)} = M(\mathcal{B}_k) = \{(q_i, a_i)\} \).</li>
+            <li><strong>Evaluation.</strong> Fine-tune base model on \( \mathcal{X}_k^{(M)} \), measure performance on held-out benchmarks \(\mathcal{T}_k\).</li>
+            <li><strong>Strong baseline:</strong> Data-Construction-Skill — skill-guided agentic construction.</li>
+          </ul>
+        </div>
+
+        <!-- Track 2 -->
+        <div class="track-card track-card-2">
+          <div class="track-header">
+            <div class="track-num">Track&nbsp;2</div>
+            <h3>Data Quality Evaluation</h3>
+          </div>
+          <p class="track-lead">
+            Can a scoring function \(Q\) <strong>predict downstream utility</strong> of candidate training datasets <em>before</em> fine-tuning?
+          </p>
+
+          <div class="track-eq">
+            \[
+            \rho(Q, D_k) = \mathrm{Pearson}\!\left( \mathbf{q}_k,\; \mathbf{s}_k \right),\;\; \mathbf{s}_k = \{\mathrm{Perf}(f(\mathcal{X}_{k,i}), \mathcal{T}_k)\}
+            \]
+          </div>
+
+          <ul class="track-points">
+            <li><strong>Input.</strong> Candidate dataset pool \( \mathbb{X}_k = \{\mathcal{X}_{k,1}, \dots, \mathcal{X}_{k,C_k}\} \) (in-domain & out-of-domain), plus optional domain proxy.</li>
+            <li><strong>Output.</strong> Per-dataset scalar score \( q_{k,i} = Q(\mathcal{X}_{k,i}) \).</li>
+            <li><strong>Evaluation.</strong> Pearson \( \rho \) between \(\mathbf{q}_k\) and empirical fine-tuned performance \(\mathbf{s}_k\), with significance \(p &lt; 0.05\).</li>
+            <li><strong>Strong baseline:</strong> Distributional Alignment Score (DAS) — MMD-based, training-free.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========= METHODS ========= -->
+  <section id="methods" class="section section-alt">
+    <div class="container">
+      <h2 class="section-title"><span class="section-num">04</span>Strong Baselines</h2>
+
+      <!-- Method 1: Data-Construction-Skill -->
+      <div class="method-card">
+        <div class="method-tag method-tag-1">For Track 1 · Data Construction</div>
+        <h3 class="method-title">Data-Construction-Skill</h3>
+        <p class="method-sub">A skill-guided agentic framework that turns long-form domain books into reusable SFT supervision.
+        The novelty is treating <strong>skills</strong> — explicit specifications of sample types, output schemas, filtering rules and validation —
+        as a reusable control layer that sits <em>between</em> high-level construction goals and low-level agent execution.</p>
+
+        <div class="method-grid">
+          <div class="method-step">
+            <div class="step-num">1</div>
+            <div class="step-title">Structure-Aware Chunking</div>
+            <div class="step-desc">Partition the corpus \( \mathcal{B}_k \) into semantically coherent chunks \( \mathcal{C}_k = \mathrm{Chunk}(\mathcal{B}_k) \), preserving local completeness while keeping inputs manageable.</div>
+          </div>
+          <div class="method-step">
+            <div class="step-num">2</div>
+            <div class="step-title">Skill-Regulated Agent</div>
+            <div class="step-desc">A reusable skill specifies sample types, output schema, filtering criteria, coverage requirements, and validation behaviors. The agent plans over the corpus and invokes utilities under skill-level constraints.</div>
+          </div>
+          <div class="method-step">
+            <div class="step-num">3</div>
+            <div class="step-title">Three-Form QA Generation</div>
+            <div class="step-desc">For each retained chunk \(c\): \( \mathcal{G}(c) = \mathcal{G}^{\mathrm{concept}}(c) \cup \mathcal{G}^{\mathrm{reason}}(c) \cup \mathcal{G}^{\mathrm{case}}(c) \) — concept, reasoning and case-based QA.</div>
+          </div>
+          <div class="method-step">
+            <div class="step-num">4</div>
+            <div class="step-title">Post-Processing &amp; Validation</div>
+            <div class="step-desc">Strip document-relative phrasing, filter malformed/duplicated/weakly-grounded samples, maintain chunk-level processing records for coverage and resumability.</div>
+          </div>
+        </div>
+
+        <div class="method-callout">
+          <i class="fas fa-lightbulb"></i>
+          <span>The skill instructs the agent to produce QA pairs that are <strong>faithful</strong> to the source, <strong>self-contained</strong>
+          (no document-relative phrasing), <strong>diverse</strong> in question type and difficulty, and useful as SFT examples — while
+          explicitly listing invalid patterns (passage-dependent prompts, hallucinated answers, duplicates).</span>
         </div>
       </div>
 
-      <div class="columns is-centered" style="margin-top: 1.4rem;">
-        <div class="column is-10">
-          <div class="paper-card">
-            <h3 class="title is-5">Core Question</h3>
-            <p>
-              Rather than asking whether generated data merely appears fluent, diverse, or clean, DataPrep-Bench asks
-              whether the prepared data leads to a better model after fine-tuning, and whether a metric can predict that
-              improvement before training is performed.
-            </p>
+      <!-- Method 2: DAS -->
+      <div class="method-card">
+        <div class="method-tag method-tag-2">For Track 2 · Data Quality Evaluation</div>
+        <h3 class="method-title">Distributional Alignment Score (DAS)</h3>
+        <p class="method-sub">A training-free, distribution-level data quality metric grounded in domain-adaptation theory.
+        DAS instantiates \(Q\) as the (negative) MMD between a candidate dataset and a domain proxy.</p>
+
+        <div class="das-formula">
+          <div class="das-formula-title">Score Definition</div>
+          \[
+          \mathrm{DAS}(\mathcal{X}_{k,i}) \;=\; -\, d_{\mathrm{MMD}}\!\left( \Phi(\mathcal{X}_{k,i}),\; \Phi(\mathcal{X}^{\mathrm{proxy}}_k);\; \kappa \right)
+          \]
+        </div>
+
+        <div class="method-grid">
+          <div class="method-step">
+            <div class="step-num">1</div>
+            <div class="step-title">Encode</div>
+            <div class="step-desc">Map each text sample with a fixed encoder \(\phi\) (Qwen3-Embedding-8B, 4096-dim). Both candidate and domain proxy are encoded identically for comparability.</div>
+          </div>
+          <div class="method-step">
+            <div class="step-num">2</div>
+            <div class="step-title">Measure</div>
+            <div class="step-desc">Empirical MMD with a Gaussian RBF kernel between candidate and proxy feature distributions. Sample 5,000 instances per dataset; bandwidth \(\sigma=1.0\).</div>
+          </div>
+          <div class="method-step">
+            <div class="step-num">3</div>
+            <div class="step-title">Score</div>
+            <div class="step-desc">Higher DAS ⟹ stronger distributional alignment with the domain proxy ⟹ higher predicted downstream utility.</div>
+          </div>
+        </div>
+
+        <div class="method-callout">
+          <i class="fas fa-square-root-variable"></i>
+          <span>Motivated by the domain-adaptation bound (Theorem 36, Redko et al., 2020): under a fixed model family and training protocol,
+          a smaller \(d_{\mathrm{MMD}}\) yields a tighter upper bound on target risk. The triangle inequality further justifies a proxy-based
+          formulation, avoiding benchmark contamination.</span>
+        </div>
+
+        <div class="proxy-grid">
+          <div class="proxy-title">Domain proxy datasets used by DAS</div>
+          <div class="proxy-pills">
+            <span class="proxy-pill"><strong>General:</strong> Infinity-Instruct</span>
+            <span class="proxy-pill"><strong>Math:</strong> ODA-Math-460k</span>
+            <span class="proxy-pill"><strong>Science:</strong> Logics-STEM</span>
+            <span class="proxy-pill"><strong>Medical:</strong> ReasonMed</span>
+            <span class="proxy-pill"><strong>Finance:</strong> Fin-o1</span>
+            <span class="proxy-pill"><strong>Law:</strong> DISC-Law-SFT</span>
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  <section class="section" id="benchmark">
-    <div class="container is-max-widescreen">
-      <div class="columns is-centered has-text-centered">
-        <div class="column is-four-fifths">
-          <span class="section-kicker"><i class="fas fa-layer-group"></i> Benchmark</span>
-          <h2 class="title is-3 section-title">DataPrep-Bench</h2>
-          <div class="content has-text-justified">
-            <p>
-              DataPrep-Bench is a comprehensive benchmark for LLM-driven training data preparation. It jointly evaluates
-              <b>Data Construction</b> and <b>Data Quality Evaluation</b> as first-class targets. Both tracks use
-              downstream model performance as the reference signal, enabling principled comparison of agents, workflows,
-              and data quality metrics.
-            </p>
+  <!-- ========= EXPERIMENTS / SETUP ========= -->
+  <section id="experiments" class="section">
+    <div class="container">
+      <h2 class="section-title"><span class="section-num">05</span>Benchmarks &amp; Experimental Setup</h2>
+
+      <div class="info-grid">
+        <div class="info-card">
+          <div class="info-title"><i class="fas fa-bullseye"></i> Downstream-grounded evaluation</div>
+          <div class="info-body">
+            Both tracks are evaluated by <strong>downstream performance</strong> under a shared protocol. Track 1 measures the utility
+            of <em>constructed</em> data through SFT; Track 2 evaluates whether a metric predicts downstream
+            utility via <strong>Pearson correlation</strong> with significance.
           </div>
         </div>
-      </div>
 
-      <div class="columns is-centered" style="margin-top: 1.5rem;">
-        <div class="column is-5">
-          <div class="paper-card">
-            <div class="icon-badge"><i class="fas fa-hammer"></i></div>
-            <h3 class="title is-4">Data Construction Track</h3>
-            <p>
-              Given raw domain sources such as books, technical manuals, or long-form knowledge materials, a construction
-              method must produce useful QA-style supervised fine-tuning data. The output is evaluated by fine-tuning
-              base models on the constructed dataset and measuring held-out domain benchmark performance.
-            </p>
-            <ul class="mini-list">
-              <li><b>Input:</b> raw Markdown-formatted domain sources.</li>
-              <li><b>Output:</b> supervised QA-style training data.</li>
-              <li><b>Evaluation:</b> downstream performance induced by the synthesized dataset.</li>
+        <div class="info-card">
+          <div class="info-title"><i class="fas fa-layer-group"></i> Domains &amp; target benchmarks</div>
+          <div class="info-body">
+            <ul class="compact-list">
+              <li><strong>General:</strong> MMLU-Redux</li>
+              <li><strong>Math:</strong> AIME24, AMC23, Gaokao2024, GSM8K, MATH, MinervaMath, OlympiadBench</li>
+              <li><strong>Science:</strong> MMLU-STEM, MMLU-Pro, GPQA, SuperGPQA, ChemBench, PIQA, SciBench</li>
+              <li><strong>Medical:</strong> MedR-Bench, MedMCQA, MedCaseReasoning</li>
+              <li><strong>Finance:</strong> XFinBench, FinEval-KR, CPA-QKA</li>
+              <li><strong>Law:</strong> LegalBench, LexGLUE</li>
             </ul>
           </div>
         </div>
 
-        <div class="column is-5">
-          <div class="paper-card">
-            <div class="icon-badge"><i class="fas fa-magnifying-glass-chart"></i></div>
-            <h3 class="title is-4">Data Quality Evaluation Track</h3>
-            <p>
-              Given candidate training datasets, a scoring function assigns scalar quality scores before fine-tuning. The
-              metric is evaluated by whether its scores are linearly predictive of the empirical downstream utility of
-              models trained on the corresponding datasets.
-            </p>
-            <ul class="mini-list">
-              <li><b>Input:</b> candidate dataset pools and optional domain proxies.</li>
-              <li><b>Output:</b> scalar utility scores for candidate datasets.</li>
-              <li><b>Evaluation:</b> Pearson correlation with downstream performance.</li>
+        <div class="info-card">
+          <div class="info-title"><i class="fas fa-microchip"></i> Base models</div>
+          <div class="info-body">
+            <ul class="compact-list">
+              <li><strong>Track 1:</strong> Qwen2.5-7B, Llama-3.1-8B</li>
+              <li><strong>Track 2:</strong> Qwen2.5-7B, Llama-3.1-8B, Mistral-7B-v0.3</li>
             </ul>
+            Track 2 spans three architectural families to test whether observed correlations are model-dependent.
           </div>
         </div>
-      </div>
 
-      <div class="columns is-centered" style="margin-top: 1.25rem;">
-        <div class="column is-10">
-          <div class="paper-card has-text-centered">
-            <h3 class="title is-5">Domains and Evaluation Coverage</h3>
-            <div>
-              <span class="tag-soft">General Text</span>
-              <span class="tag-soft">Mathematical Reasoning</span>
-              <span class="tag-soft">Science</span>
-              <span class="tag-soft">Medical</span>
-              <span class="tag-soft">Finance</span>
-              <span class="tag-soft">Law</span>
-            </div>
-            <p style="margin-top: 1rem;">
-              DataPrep-Bench spans broad and specialized domains, with target benchmarks including MMLU-Redux, AIME,
-              AMC, GSM8K, MATH, MinervaMath, OlympiadBench, GPQA, SuperGPQA, ChemBench, MedMCQA,
-              MedR-Bench, XFinBench, LegalBench, and LexGLUE.
-            </p>
+        <div class="info-card">
+          <div class="info-title"><i class="fas fa-sliders"></i> Fine-tuning protocol</div>
+          <div class="info-body">
+            All models fine-tuned via <strong>LlamaFactory</strong> under a consistent recipe: 3 epochs, cosine LR, initial LR \(5.0 \times 10^{-6}\),
+            warmup ratio 0.1, per-device batch 1, gradient accumulation 4 (global batch 32), 8×H20 cluster.
+            Non-instruct base models are augmented with Dolly-15k.
           </div>
         </div>
-      </div>
 
-      <div class="columns is-centered" style="margin-top: 1.25rem;">
-        <div class="column is-10">
-          <div class="table-card">
-            <div class="table-header">
-              <div>
-                <h4 class="title is-5">Source Corpus</h4>
-                <p>Raw domain materials used as input for the Data Construction Track.</p>
-              </div>
-            </div>
-            <div class="table-container">
-              <table class="nice-table compact">
-                <thead>
-                  <tr>
-                    <th>Domain</th>
-                    <th>Source Materials</th>
-                    <th>Preprocessing</th>
-                    <th>Purpose</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td><b>General Text</b></td>
-                    <td>FineWeb sample-10BT subset, sampled into Markdown files</td>
-                    <td>Randomly sampled 150 MB and organized into 100 Markdown files</td>
-                    <td>General instruction and language understanding</td>
-                  </tr>
-                  <tr>
-                    <td><b>Math</b></td>
-                    <td>Chinese university mathematics textbooks and competition materials</td>
-                    <td>Converted and normalized into Markdown</td>
-                    <td>Mathematical reasoning and problem solving</td>
-                  </tr>
-                  <tr>
-                    <td><b>Science</b></td>
-                    <td>Books from Wikibooks, FreeBookCentre, Open Textbook Library; IChO and IBO materials</td>
-                    <td>PDF-to-Markdown conversion with MinerU</td>
-                    <td>Physics, chemistry, biology, and scientific reasoning</td>
-                  </tr>
-                  <tr>
-                    <td><b>Medical</b></td>
-                    <td>Domain books and long-form medical knowledge materials</td>
-                    <td>PDF-to-Markdown conversion with MinerU</td>
-                    <td>Medical knowledge and clinical reasoning</td>
-                  </tr>
-                  <tr>
-                    <td><b>Finance</b></td>
-                    <td>Domain books and long-form financial knowledge materials</td>
-                    <td>PDF-to-Markdown conversion with MinerU</td>
-                    <td>Financial expertise and quantitative reasoning</td>
-                  </tr>
-                  <tr>
-                    <td><b>Law</b></td>
-                    <td>Domain books and long-form legal knowledge materials</td>
-                    <td>PDF-to-Markdown conversion with MinerU</td>
-                    <td>Legal knowledge and document-level reasoning</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <p class="small-note">
-              All construction methods receive the same unified input format: folders of Markdown files containing raw
-              domain knowledge sources.
-            </p>
+        <div class="info-card">
+          <div class="info-title"><i class="fas fa-book"></i> Source corpus (Track 1)</div>
+          <div class="info-body">
+            Domain books from Wikibooks / FreeBookCentre / Open Textbook Library; Chinese university and competition materials for Math/Science;
+            FineWeb 150 MB sample (100 Markdown files) for General. All PDFs converted to Markdown via <strong>MinerU</strong> for a unified input format.
           </div>
         </div>
-      </div>
 
-      <div class="columns is-centered" style="margin-top: 1.25rem;">
-        <div class="column is-10">
-          <div class="table-card">
-            <div class="table-header">
-              <div>
-                <h4 class="title is-5">Candidate Dataset Pools</h4>
-                <p>Proxy datasets and candidate pools used in the Data Quality Evaluation Track.</p>
-              </div>
-            </div>
-            <div class="table-container">
-              <table class="nice-table compact">
-                <thead>
-                  <tr>
-                    <th>Domain</th>
-                    <th>Proxy / Reference Dataset</th>
-                    <th>In-domain Candidate Dataset</th>
-                    <th>Out-domain Candidate Dataset</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td><b>General</b></td>
-                    <td>Infinity-Instruct</td>
-                    <td>DataFlow-10k; WizardLM 196k; UltraChat; Tulu 3 SFT Mixture; Smoltalk Chinese; OpenHermes 2.5</td>
-                    <td>OpenR1-Math-220k; Synthetic-1; ScaleQuest; UltraMedical; Finance-Instruct-500k; MegaScience; Nemotron-Science-v1; Lawyer-Llama</td>
-                  </tr>
-                  <tr>
-                    <td><b>Math</b></td>
-                    <td>ODA-Math-460k</td>
-                    <td>OpenR1-Math-220k; Synthetic-1; ScaleQuest</td>
-                    <td>Infinity-Instruct; DataFlow-10k; WizardLM 196k; UltraChat; Tulu 3 SFT Mixture; Smoltalk Chinese; OpenHermes 2.5</td>
-                  </tr>
-                  <tr>
-                    <td><b>Science</b></td>
-                    <td>Logics-STEM</td>
-                    <td>MegaScience; Nemotron-Science-v1</td>
-                    <td>Infinity-Instruct; DataFlow-10k; WizardLM 196k; UltraChat; Tulu 3 SFT Mixture; Smoltalk Chinese; OpenHermes 2.5</td>
-                  </tr>
-                  <tr>
-                    <td><b>Medical</b></td>
-                    <td>ReasonMed</td>
-                    <td>UltraMedical</td>
-                    <td>Infinity-Instruct; DataFlow-10k; WizardLM 196k; UltraChat; Tulu 3 SFT Mixture; Smoltalk Chinese; OpenHermes 2.5</td>
-                  </tr>
-                  <tr>
-                    <td><b>Finance</b></td>
-                    <td>Fin-o1</td>
-                    <td>Finance-Instruct-500k</td>
-                    <td>Infinity-Instruct; DataFlow-10k; WizardLM 196k; UltraChat; Tulu 3 SFT Mixture; Smoltalk Chinese; OpenHermes 2.5</td>
-                  </tr>
-                  <tr>
-                    <td><b>Law</b></td>
-                    <td>DISC-Law-SFT</td>
-                    <td>Lawyer-Llama</td>
-                    <td>Infinity-Instruct; DataFlow-10k; WizardLM 196k; UltraChat; Tulu 3 SFT Mixture; Smoltalk Chinese; OpenHermes 2.5</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <p class="small-note">
-              Proxy datasets are used only for metric computation and are kept separate from downstream benchmark test
-              sets to avoid evaluation leakage.
-            </p>
+        <div class="info-card">
+          <div class="info-title"><i class="fas fa-database"></i> Candidate pools (Track 2)</div>
+          <div class="info-body">
+            For each domain, an in-domain pool (e.g., DataFlow-10k, WizardLM, UltraChat, OpenR1-Math-220k, MegaScience, UltraMedical, …)
+            plus an out-of-domain pool drawn from other domains. Each candidate is fine-tuned and benchmarked to provide ground-truth
+            downstream utility.
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  <section class="section" id="evaluation">
-    <div class="container is-max-widescreen">
-      <div class="columns is-centered has-text-centered">
-        <div class="column is-four-fifths">
-          <span class="section-kicker"><i class="fas fa-ruler-combined"></i> Protocol</span>
-          <h2 class="title is-3 section-title">Downstream-Grounded Evaluation</h2>
-          <div class="content has-text-justified">
-            <p>
-              DataPrep-Bench evaluates data preparation by its actual training utility. For each candidate supervised
-              fine-tuning dataset, a base model is fine-tuned under a shared training protocol and then evaluated on
-              held-out benchmarks from the corresponding domain. This design avoids relying on surface-level proxies such
-              as fluency, perplexity, or diversity alone.
-            </p>
-            <p>
-              In the Data Construction Track, the benchmark asks whether a construction method can transform raw domain
-              materials into training data that improves a downstream model. In the Data Quality Evaluation Track, the
-              benchmark asks whether a scoring function can predict which candidate datasets will be useful before the
-              cost of fine-tuning is incurred.
-            </p>
-            <p>
-              Both tracks are grounded in the same empirical reference signal: the performance of models trained on the
-              prepared or selected data. This enables a unified comparison among LLM generators, agentic workflows,
-              skill-guided systems, and training-free quality estimators.
-            </p>
-          </div>
+  <!-- ========= TRACK 1 RESULTS ========= -->
+  <section id="track1-results" class="section section-alt">
+    <div class="container">
+      <h2 class="section-title"><span class="section-num">06</span>Track 1 · Data Construction Results</h2>
+      <p class="lead">
+        We compare four families of construction methods — <strong>DataFlow-based</strong>, <strong>Direct LLM</strong>, <strong>Agent-based</strong>,
+        and our <strong>Skill-based</strong> baseline — by fine-tuning Qwen2.5-7B and Llama-3.1-8B on each method's synthesized dataset and measuring
+        downstream performance across six domains.
+      </p>
 
-          <div class="method-flow">
-            <div class="flow-step">
-              <div class="step-index">Step 1</div>
-              <h4 class="title is-5">Prepare or Score Data</h4>
-              <p>
-                Construction methods synthesize SFT data from raw sources, while quality metrics assign utility scores
-                to candidate datasets before training.
-              </p>
-            </div>
-            <div class="flow-step">
-              <div class="step-index">Step 2</div>
-              <h4 class="title is-5">Train Under a Shared Protocol</h4>
-              <p>
-                Base models are fine-tuned using consistent hyperparameters, allowing the benchmark to isolate the effect
-                of data preparation decisions.
-              </p>
-            </div>
-            <div class="flow-step">
-              <div class="step-index">Step 3</div>
-              <h4 class="title is-5">Measure Downstream Utility</h4>
-              <p>
-                Constructed datasets are evaluated by induced benchmark performance, and quality metrics are evaluated by
-                their correlation with empirical downstream utility.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="section" id="methods">
-    <div class="container is-max-widescreen">
-      <div class="columns is-centered has-text-centered">
-        <div class="column is-four-fifths">
-          <span class="section-kicker"><i class="fas fa-flask"></i> Methods</span>
-          <h2 class="title is-3 section-title">Strong Baselines Released with DataPrep-Bench</h2>
-          <div class="content has-text-justified">
-            <p>
-              We release two methodological baselines aligned with the two benchmark tracks:
-              <b>Data-Construction-Skill</b> for skill-guided agentic data construction, and
-              <b>Distributional Alignment Score</b> for training-free data quality evaluation.
-            </p>
-          </div>
-        </div>
+      <div class="tabbar" data-tab-group="t1">
+        <button class="tab active" data-tab="t1-qwen">Qwen2.5-7B</button>
+        <button class="tab" data-tab="t1-llama">Llama-3.1-8B</button>
       </div>
 
-      <div class="columns is-centered" style="margin-top: 1.5rem;">
-        <div class="column is-5">
-          <div class="paper-card">
-            <div class="icon-badge"><i class="fas fa-wand-magic-sparkles"></i></div>
-            <h3 class="title is-4">Data-Construction-Skill</h3>
-            <p>
-              Data-Construction-Skill introduces skills as a reusable control layer for long-horizon agentic data
-              construction. A skill packages task instructions, output schemas, sample types, filtering rules, coverage
-              requirements, and validation behavior, while the agent remains responsible for planning over the corpus and
-              processing source chunks iteratively.
-            </p>
-            <div>
-              <span class="tag-soft tag-accent">Concept QA</span>
-              <span class="tag-soft tag-accent">Reasoning QA</span>
-              <span class="tag-soft tag-accent">Case-based QA</span>
-            </div>
-            <p style="margin-top: 0.8rem;">
-              The method filters navigational, noisy, duplicated, weakly grounded, and passage-dependent samples, so that
-              the final dataset reflects reusable domain supervision rather than book-comprehension behavior.
-            </p>
-          </div>
+      <!-- Qwen -->
+      <div class="tabpane active" id="t1-qwen" data-tab-group="t1">
+        <div class="callout callout-blue">
+          <div class="callout-title"><i class="fas fa-star"></i> Highlights — Qwen2.5-7B</div>
+          <ul class="callout-list">
+            <li><strong>Math (Avg):</strong> Agent <strong>GPT-5.2</strong> 25.5; Agent <strong>GLM-4.7</strong> 25.3; Agent <strong>Qwen3.5-Plus</strong> 25.2; <strong>Skill</strong> 24.1.</li>
+            <li><strong>General Text (MMLU-Redux):</strong> <strong>Skill</strong> 78.2 — ties with Claude Opus 4.6 (LLM) for best.</li>
+            <li><strong>Finance (Avg):</strong> Agent <strong>GPT-5.3-codex</strong> 59.3 — outperforms the no-synthetic baseline (57.8).</li>
+            <li><strong>Medicine (Avg):</strong> Agent <strong>Gemini 3.0 Pro</strong> 43.8 — large gain over no-synthetic (36.3).</li>
+            <li><strong>Law (Avg):</strong> <strong>DataFlow</strong> 77.2; DataFlow-Skill 74.7; agent-based variants competitive.</li>
+            <li><strong>Skill on Minerva-Math:</strong> 14.0 — best across all generators in this column.</li>
+          </ul>
         </div>
 
-        <div class="column is-5">
-          <div class="paper-card">
-            <div class="icon-badge"><i class="fas fa-vector-square"></i></div>
-            <h3 class="title is-4">Distributional Alignment Score</h3>
-            <p>
-              DAS estimates whether a candidate dataset is distributionally aligned with a domain proxy. Text samples are
-              embedded with a fixed encoder, and Maximum Mean Discrepancy is computed between candidate and proxy feature
-              distributions using a Gaussian RBF kernel.
-            </p>
-            <p>
-              Since smaller MMD indicates stronger alignment, DAS is defined as negative MMD. Higher DAS therefore
-              predicts higher downstream utility without requiring downstream fine-tuning.
-            </p>
-            <div style="margin-top: 1rem;">
-              <span class="tag-soft">Training-free</span>
-              <span class="tag-soft">Proxy-based</span>
-              <span class="tag-soft">Distribution-level</span>
-              <span class="tag-soft">MMD over embeddings</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="section" id="results">
-    <div class="container is-max-widescreen">
-      <div class="columns is-centered has-text-centered">
-        <div class="column is-four-fifths">
-          <span class="section-kicker"><i class="fas fa-chart-simple"></i> Results</span>
-          <h2 class="title is-3 section-title">Experimental Results</h2>
-          <div class="content has-text-justified">
-            <p>
-              Experiments across six domains show that data preparation methods can lead to substantially different
-              downstream outcomes. Constructed data does not always improve model performance, highlighting why data
-              preparation must be evaluated under shared source corpora, base models, and benchmarks.
-            </p>
-            <p>
-              Data-Construction-Skill provides a strong baseline for skill-guided agentic data construction. DAS achieves
-              strong overall correlation with downstream performance across several domains and model architectures,
-              while Finance and Law reveal that no single quality metric is uniformly reliable across all settings.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <details class="result-details" open>
-        <summary>Table 1. Qwen2.5-7B Data Construction Results on Math, General, and Finance</summary>
-        <div class="table-card">
-          <div class="table-header">
-            <div>
-              <h4 class="title is-5">Qwen2.5-7B: Math, General, and Finance</h4>
-              <p>Downstream performance after fine-tuning on datasets synthesized by different generators.</p>
-            </div>
-          </div>
-          <div class="table-container">
-            <table class="nice-table wide">
+        <details class="details" open>
+          <summary>Table A. Qwen2.5-7B — Math (per benchmark) &amp; General &amp; Finance (Avg)</summary>
+          <div class="table-wrap">
+            <table class="paper-table">
               <thead>
                 <tr>
-                  <th>Training Data Generator</th>
-                  <th>GSM8K</th>
-                  <th>AMC23</th>
-                  <th>AIME24</th>
-                  <th>Minerva</th>
-                  <th>Olympiad</th>
-                  <th>MATH-500</th>
-                  <th>Gaokao2024</th>
-                  <th>Math Avg</th>
-                  <th>MMLU-Redux</th>
-                  <th>General Avg</th>
-                  <th>CPA-KQA</th>
-                  <th>FinEval-KR</th>
-                  <th>XFinBench</th>
-                  <th>Finance Avg</th>
+                  <th rowspan="2" class="left-col">Generator</th>
+                  <th colspan="8" class="group-1">Math</th>
+                  <th class="group-2">General</th>
+                  <th class="group-3">Finance</th>
+                </tr>
+                <tr>
+                  <th class="group-1">GSM8K</th>
+                  <th class="group-1">AMC23</th>
+                  <th class="group-1">AIME24</th>
+                  <th class="group-1">M-Math</th>
+                  <th class="group-1">OB</th>
+                  <th class="group-1">M500</th>
+                  <th class="group-1">GK24</th>
+                  <th class="group-1">Avg</th>
+                  <th class="group-2">MMLU-R</th>
+                  <th class="group-3">Avg</th>
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td><b>No synthetic training</b></td>
-                  <td>69.9</td><td>17.5</td><td>0.0</td><td>10.7</td><td>10.7</td><td class="best">39.8</td><td>16.5</td><td>23.6</td>
-                  <td>77.7</td><td>77.7</td><td class="second">57.6</td><td class="second">59.4</td><td>56.3</td><td class="second">57.8</td>
+                <tr class="row-baseline">
+                  <td class="left-col">No synthetic training</td>
+                  <td>69.9</td><td>17.5</td><td>0.0</td><td>10.7</td><td>10.7</td><td><strong>39.8</strong></td><td>16.5</td><td>23.6</td>
+                  <td>77.7</td>
+                  <td>57.8</td>
                 </tr>
-                <tr class="group-row"><td colspan="15">DataFlow-based Generators</td></tr>
-                <tr>
-                  <td>DataFlow</td>
-                  <td>56.5</td><td>7.5</td><td>0.0</td><td>7.7</td><td>7.9</td><td>27.4</td><td>17.6</td><td>17.8</td>
-                  <td class="second">77.9</td><td class="second">77.9</td><td>51.0</td><td>54.5</td><td class="best">59.3</td><td>54.9</td>
-                </tr>
-                <tr>
-                  <td>DataFlow-Agent</td>
-                  <td>56.7</td><td>10.0</td><td>0.0</td><td>8.8</td><td>6.2</td><td>22.8</td><td class="best">28.6</td><td>19.0</td>
-                  <td>76.5</td><td>76.5</td><td class="muted-cell">—</td><td class="muted-cell">—</td><td class="muted-cell">—</td><td class="muted-cell">—</td>
-                </tr>
-                <tr class="group-row"><td colspan="15">Direct LLM-based Generators</td></tr>
-                <tr>
-                  <td>Claude Opus 4.6</td>
-                  <td>68.8</td><td>12.5</td><td>0.0</td><td>8.8</td><td>9.8</td><td>35.5</td><td>14.3</td><td>21.4</td>
-                  <td class="best">78.2</td><td class="best">78.2</td><td>37.6</td><td>39.6</td><td>55.9</td><td>44.4</td>
-                </tr>
-                <tr>
-                  <td>Gemini 3.0 Pro</td>
-                  <td>72.1</td><td>20.0</td><td>0.0</td><td>10.7</td><td>11.4</td><td>37.9</td><td>15.4</td><td>23.9</td>
-                  <td>77.8</td><td>77.8</td><td>48.6</td><td>49.5</td><td class="second">58.4</td><td>52.2</td>
-                </tr>
-                <tr>
-                  <td>GPT-5.2</td>
-                  <td>66.7</td><td>17.5</td><td>0.0</td><td>7.7</td><td>11.1</td><td>32.7</td><td>14.3</td><td>21.4</td>
-                  <td class="second">77.9</td><td class="second">77.9</td><td>47.1</td><td>43.6</td><td>53.6</td><td>48.1</td>
-                </tr>
-                <tr class="group-row"><td colspan="15">Agent-based Generators</td></tr>
-                <tr>
-                  <td>Qwen3.5-Plus</td>
-                  <td class="best">72.7</td><td class="second">22.5</td><td class="best">3.3</td><td class="second">11.0</td><td class="second">11.6</td><td class="second">38.7</td><td>16.5</td><td>25.2</td>
-                  <td>77.6</td><td>77.6</td><td>48.1</td><td>49.5</td><td>55.6</td><td>51.1</td>
-                </tr>
-                <tr>
-                  <td>GLM-4.7</td>
-                  <td>71.4</td><td class="second">22.5</td><td class="best">3.3</td><td>9.6</td><td class="second">11.6</td><td>37.9</td><td>20.9</td><td class="second">25.3</td>
-                  <td>77.3</td><td>77.3</td><td>51.4</td><td>55.4</td><td>53.1</td><td>53.3</td>
-                </tr>
-                <tr>
-                  <td>Claude Opus 4.6 Agent</td>
-                  <td>69.4</td><td>10.0</td><td>0.0</td><td class="second">11.0</td><td>8.9</td><td>33.8</td><td>19.8</td><td>21.8</td>
-                  <td>75.9</td><td>75.9</td><td>32.4</td><td>39.6</td><td>53.8</td><td>41.9</td>
-                </tr>
-                <tr>
-                  <td>Gemini 3.0 Pro Agent</td>
-                  <td>70.1</td><td>15.0</td><td>0.0</td><td>8.8</td><td>10.8</td><td>35.7</td><td>20.9</td><td>23.0</td>
-                  <td>77.7</td><td>77.7</td><td>53.3</td><td>52.5</td><td>55.4</td><td>53.7</td>
-                </tr>
-                <tr>
-                  <td>GPT-5.2 Agent</td>
-                  <td>69.6</td><td class="best">25.0</td><td class="best">3.3</td><td>8.8</td><td>9.9</td><td>35.6</td><td class="second">26.4</td><td class="best">25.5</td>
-                  <td>77.7</td><td>77.7</td><td>39.1</td><td>39.6</td><td>51.0</td><td>43.2</td>
-                </tr>
-                <tr>
-                  <td>GPT-5.3-codex Agent</td>
-                  <td>70.8</td><td>15.0</td><td>0.0</td><td class="second">11.0</td><td class="best">11.7</td><td>38.5</td><td>13.2</td><td>22.9</td>
-                  <td>77.6</td><td>77.6</td><td class="best">58.6</td><td class="best">63.4</td><td>55.9</td><td class="best">59.3</td>
-                </tr>
-                <tr class="group-row"><td colspan="15">Skill-guided Generator</td></tr>
-                <tr>
-                  <td><b>Data-Construction-Skill</b></td>
-                  <td class="second">72.6</td><td>17.5</td><td class="best">3.3</td><td class="best">14.0</td><td>11.1</td><td>36.8</td><td>13.2</td><td>24.1</td>
-                  <td class="best">78.2</td><td class="best">78.2</td><td class="second">57.6</td><td>53.5</td><td>55.4</td><td>55.5</td>
+                <tr class="group-divider"><td colspan="11">DataFlow-based Generators</td></tr>
+                <tr><td class="left-col">DataFlow</td><td>56.5</td><td>7.5</td><td>0.0</td><td>7.7</td><td>7.9</td><td>27.4</td><td>17.6</td><td>17.8</td><td>77.9</td><td>54.9</td></tr>
+                <tr><td class="left-col">DataFlow-Skill</td><td>56.7</td><td>10.0</td><td>0.0</td><td>8.8</td><td>6.2</td><td>22.8</td><td><strong>28.6</strong></td><td>19.0</td><td>76.5</td><td>—</td></tr>
+                <tr class="group-divider"><td colspan="11">LLM-based Generators</td></tr>
+                <tr><td class="left-col">Claude Opus 4.6</td><td>68.8</td><td>12.5</td><td>0.0</td><td>8.8</td><td>9.8</td><td>35.5</td><td>14.3</td><td>21.4</td><td><strong>78.2</strong></td><td>44.4</td></tr>
+                <tr><td class="left-col">Gemini 3.0 Pro</td><td>72.1</td><td>20.0</td><td>0.0</td><td>10.7</td><td>11.4</td><td>37.9</td><td>15.4</td><td>23.9</td><td>77.8</td><td>52.2</td></tr>
+                <tr><td class="left-col">GPT-5.2</td><td>66.7</td><td>17.5</td><td>0.0</td><td>7.7</td><td>11.1</td><td>32.7</td><td>14.3</td><td>21.4</td><td>77.9</td><td>48.1</td></tr>
+                <tr class="group-divider"><td colspan="11">Agent-based Generators</td></tr>
+                <tr><td class="left-col">Qwen3.5-Plus</td><td><strong>72.7</strong></td><td>22.5</td><td><strong>3.3</strong></td><td>11.0</td><td>11.6</td><td>38.7</td><td>16.5</td><td>25.2</td><td>77.6</td><td>51.1</td></tr>
+                <tr><td class="left-col">GLM-4.7</td><td>71.4</td><td>22.5</td><td><strong>3.3</strong></td><td>9.6</td><td>11.6</td><td>37.9</td><td>20.9</td><td>25.3</td><td>77.3</td><td>53.3</td></tr>
+                <tr><td class="left-col">Claude Opus 4.6</td><td>69.4</td><td>10.0</td><td>0.0</td><td>11.0</td><td>8.9</td><td>33.8</td><td>19.8</td><td>21.8</td><td>75.9</td><td>41.9</td></tr>
+                <tr><td class="left-col">Gemini 3.0 Pro</td><td>70.1</td><td>15.0</td><td>0.0</td><td>8.8</td><td>10.8</td><td>35.7</td><td>20.9</td><td>23.0</td><td>77.7</td><td>53.7</td></tr>
+                <tr><td class="left-col">GPT-5.2</td><td>69.6</td><td><strong>25.0</strong></td><td><strong>3.3</strong></td><td>8.8</td><td>9.9</td><td>35.6</td><td>26.4</td><td><strong>25.5</strong></td><td>77.7</td><td>43.2</td></tr>
+                <tr><td class="left-col">GPT-5.3-codex</td><td>70.8</td><td>15.0</td><td>0.0</td><td>11.0</td><td><strong>11.7</strong></td><td>38.5</td><td>13.2</td><td>22.9</td><td>77.6</td><td><strong>59.3</strong></td></tr>
+                <tr class="row-ours">
+                  <td class="left-col"><strong>Skill (Claude Opus 4.6)</strong></td>
+                  <td>72.6</td><td>17.5</td><td><strong>3.3</strong></td><td><strong>14.0</strong></td><td>11.1</td><td>36.8</td><td>13.2</td><td>24.1</td>
+                  <td><strong>78.2</strong></td>
+                  <td>55.5</td>
                 </tr>
               </tbody>
             </table>
           </div>
-        </div>
-      </details>
-
-      <details class="result-details">
-        <summary>Table 2. Llama-3.1-8B Data Construction Results on Math, General, and Finance</summary>
-        <div class="table-card">
-          <div class="table-header">
-            <div>
-              <h4 class="title is-5">Llama-3.1-8B: Math, General, and Finance</h4>
-              <p>Downstream performance after fine-tuning on datasets synthesized by different generators.</p>
-            </div>
+          <div class="table-note">
+            Abbreviations: M-Math = Minerva-Math · OB = OlympiadBench · M500 = MATH-500 · GK24 = Gaokao 2024 · MMLU-R = MMLU-Redux.
+            Source: Table <code>synthetic_data_mgf_qwen</code> in the paper. Bold marks the best in each column.
           </div>
-          <div class="table-container">
-            <table class="nice-table wide">
+        </details>
+
+        <details class="details">
+          <summary>Table B. Qwen2.5-7B — Law &amp; Medicine (per benchmark) &amp; Science (Avg)</summary>
+          <div class="table-wrap">
+            <table class="paper-table">
               <thead>
                 <tr>
-                  <th>Training Data Generator</th>
-                  <th>GSM8K</th><th>AMC23</th><th>AIME24</th><th>Minerva</th><th>Olympiad</th><th>MATH-500</th><th>Gaokao2024</th><th>Math Avg</th>
-                  <th>MMLU-Redux</th><th>General Avg</th>
-                  <th>CPA-KQA</th><th>FinEval-KR</th><th>XFinBench</th><th>Finance Avg</th>
+                  <th rowspan="2" class="left-col">Generator</th>
+                  <th colspan="3" class="group-1">Law</th>
+                  <th colspan="4" class="group-2">Medicine</th>
+                  <th class="group-3">Science</th>
+                </tr>
+                <tr>
+                  <th class="group-1">LegalBench</th>
+                  <th class="group-1">LexGLUE</th>
+                  <th class="group-1">Avg</th>
+                  <th class="group-2">MedCaseR.</th>
+                  <th class="group-2">MedMCQA</th>
+                  <th class="group-2">MedR-Bench</th>
+                  <th class="group-2">Avg</th>
+                  <th class="group-3">Avg</th>
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td><b>No synthetic training</b></td>
-                  <td class="best">33.9</td><td class="best">10.0</td><td class="best">0.0</td><td>6.6</td><td>3.7</td><td class="best">13.6</td><td>14.3</td><td class="best">11.7</td>
-                  <td class="best">67.1</td><td class="best">67.1</td><td>12.6</td><td>12.4</td><td>20.3</td><td>15.1</td>
-                </tr>
-                <tr class="group-row"><td colspan="15">DataFlow-based Generators</td></tr>
-                <tr>
-                  <td>DataFlow</td>
-                  <td>8.4</td><td class="best">10.0</td><td class="best">0.0</td><td>4.8</td><td>2.5</td><td>6.1</td><td>8.8</td><td>5.8</td>
-                  <td>51.1</td><td>51.1</td><td>27.1</td><td>26.7</td><td>40.5</td><td>31.4</td>
-                </tr>
-                <tr>
-                  <td>DataFlow-Agent</td>
-                  <td>8.7</td><td>2.5</td><td class="best">0.0</td><td>4.4</td><td>3.3</td><td>7.2</td><td class="second">16.5</td><td>6.1</td>
-                  <td>48.4</td><td>48.4</td><td class="second">34.8</td><td class="best">31.7</td><td class="second">43.0</td><td class="best">36.5</td>
-                </tr>
-                <tr class="group-row"><td colspan="15">Direct LLM-based Generators</td></tr>
-                <tr>
-                  <td>Claude Opus 4.6</td>
-                  <td>28.7</td><td>5.0</td><td class="best">0.0</td><td>6.2</td><td>2.8</td><td>11.2</td><td>11.0</td><td>9.3</td>
-                  <td class="second">52.9</td><td class="second">52.9</td><td>22.9</td><td>24.8</td><td>37.5</td><td>28.4</td>
-                </tr>
-                <tr>
-                  <td>Gemini 3.0 Pro</td>
-                  <td>30.7</td><td class="second">7.5</td><td class="best">0.0</td><td class="best">8.1</td><td>3.7</td><td>12.6</td><td>14.3</td><td class="second">11.0</td>
-                  <td>50.8</td><td>50.8</td><td>23.8</td><td class="second">27.7</td><td>42.1</td><td>31.2</td>
-                </tr>
-                <tr>
-                  <td>GPT-5.2</td>
-                  <td>26.8</td><td>2.5</td><td class="best">0.0</td><td class="second">7.7</td><td class="second">4.1</td><td>10.2</td><td>13.2</td><td>9.2</td>
-                  <td>47.4</td><td>47.4</td><td>25.2</td><td>24.8</td><td>32.2</td><td>27.4</td>
-                </tr>
-                <tr class="group-row"><td colspan="15">Agent-based Generators</td></tr>
-                <tr>
-                  <td>Qwen3.5-Plus</td>
-                  <td class="second">33.7</td><td>5.0</td><td class="best">0.0</td><td>6.6</td><td class="best">4.4</td><td>11.3</td><td>12.1</td><td>10.4</td>
-                  <td>50.4</td><td>50.4</td><td>23.3</td><td>20.8</td><td>38.2</td><td>27.4</td>
-                </tr>
-                <tr>
-                  <td>GLM-4.7</td>
-                  <td>31.8</td><td>2.5</td><td class="best">0.0</td><td>5.9</td><td>3.1</td><td class="second">13.0</td><td class="best">17.6</td><td>10.6</td>
-                  <td>49.2</td><td>49.2</td><td>23.8</td><td>25.7</td><td class="second">43.0</td><td>30.8</td>
-                </tr>
-                <tr>
-                  <td>Claude Opus 4.6 Agent</td>
-                  <td>16.4</td><td>5.0</td><td class="best">0.0</td><td>6.6</td><td>2.5</td><td>7.7</td><td>8.8</td><td>6.7</td>
-                  <td>47.5</td><td>47.5</td><td>23.3</td><td>25.7</td><td>37.7</td><td>28.9</td>
-                </tr>
-                <tr>
-                  <td>Gemini 3.0 Pro Agent</td>
-                  <td>29.6</td><td class="second">7.5</td><td class="best">0.0</td><td>6.2</td><td>3.6</td><td>11.5</td><td class="best">17.6</td><td>10.9</td>
-                  <td>47.9</td><td>47.9</td><td>25.2</td><td>21.8</td><td>40.9</td><td>29.3</td>
-                </tr>
-                <tr>
-                  <td>GPT-5.2 Agent</td>
-                  <td>28.7</td><td>5.0</td><td class="best">0.0</td><td>6.6</td><td>4.0</td><td>10.4</td><td>15.4</td><td>10.0</td>
-                  <td>49.0</td><td>49.0</td><td>21.9</td><td>21.8</td><td class="best">44.8</td><td>29.5</td>
-                </tr>
-                <tr>
-                  <td>GPT-5.3-codex Agent</td>
-                  <td>29.9</td><td>2.5</td><td class="best">0.0</td><td>5.9</td><td>2.8</td><td>12.2</td><td>14.3</td><td>9.7</td>
-                  <td>51.3</td><td>51.3</td><td>23.3</td><td>25.7</td><td>41.8</td><td>30.3</td>
-                </tr>
-                <tr class="group-row"><td colspan="15">Skill-guided Generator</td></tr>
-                <tr>
-                  <td><b>Data-Construction-Skill</b></td>
-                  <td>16.5</td><td class="second">7.5</td><td class="best">0.0</td><td>4.4</td><td>3.0</td><td>9.5</td><td>11.0</td><td>7.4</td>
-                  <td>51.3</td><td>51.3</td><td class="best">36.2</td><td class="best">31.7</td><td>34.7</td><td class="second">34.2</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </details>
-
-      <details class="result-details">
-        <summary>Table 3. Qwen2.5-7B Data Construction Results on Law, Medicine, and Science</summary>
-        <div class="table-card">
-          <div class="table-header">
-            <div>
-              <h4 class="title is-5">Qwen2.5-7B: Law, Medicine, and Science</h4>
-              <p>Specialized-domain results after fine-tuning on constructed data.</p>
-            </div>
-          </div>
-          <div class="table-container">
-            <table class="nice-table extra-wide">
-              <thead>
-                <tr>
-                  <th>Training Data Generator</th>
-                  <th>LegalBench</th><th>LexGLUE</th><th>Law Avg</th>
-                  <th>MedCase</th><th>MedMCQA</th><th>MedR-Bench</th><th>Medicine Avg</th>
-                  <th>MMLU-STEM</th><th>MMLU-Pro</th><th>GPQA</th><th>SuperGPQA</th><th>ChemBench</th><th>PIQA</th><th>SciBench</th><th>Science Avg</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td><b>No synthetic training</b></td>
+                <tr class="row-baseline">
+                  <td class="left-col">No synthetic training</td>
                   <td>86.9</td><td>62.0</td><td>74.5</td>
                   <td>13.6</td><td>27.4</td><td>67.8</td><td>36.3</td>
-                  <td class="best">47.5</td><td class="best">28.6</td><td>21.1</td><td class="best">15.7</td><td class="best">24.3</td><td class="best">52.7</td><td class="second">5.2</td><td class="best">27.9</td>
+                  <td><strong>27.9</strong></td>
                 </tr>
-                <tr class="group-row"><td colspan="16">DataFlow-based Generators</td></tr>
-                <tr>
-                  <td>DataFlow</td>
-                  <td>89.7</td><td class="best">64.8</td><td class="best">77.2</td>
-                  <td>9.9</td><td>29.4</td><td>63.6</td><td>34.3</td>
-                  <td>37.9</td><td>23.9</td><td>20.7</td><td>11.8</td><td>15.7</td><td>28.8</td><td>2.0</td><td>20.1</td>
-                </tr>
-                <tr>
-                  <td>DataFlow-Agent</td>
-                  <td class="best">92.0</td><td>57.4</td><td>74.7</td>
-                  <td>11.9</td><td>24.1</td><td>65.6</td><td>33.9</td>
-                  <td>44.2</td><td>24.6</td><td>18.0</td><td>13.0</td><td>18.8</td><td>43.5</td><td>2.0</td><td>23.4</td>
-                </tr>
-                <tr class="group-row"><td colspan="16">Direct LLM-based Generators</td></tr>
-                <tr>
-                  <td>Claude Opus 4.6</td>
-                  <td>88.0</td><td>63.2</td><td class="second">75.6</td>
-                  <td>13.9</td><td>8.1</td><td>66.8</td><td>29.6</td>
-                  <td>38.7</td><td>24.6</td><td class="second">22.4</td><td>13.1</td><td>19.3</td><td>40.9</td><td>2.7</td><td>23.1</td>
-                </tr>
-                <tr>
-                  <td>Gemini 3.0 Pro</td>
-                  <td>85.9</td><td class="second">63.5</td><td>74.7</td>
-                  <td>12.2</td><td>6.0</td><td class="second">69.1</td><td>29.1</td>
-                  <td>39.7</td><td>25.7</td><td>19.7</td><td>12.7</td><td>21.2</td><td>44.0</td><td>3.3</td><td>23.8</td>
-                </tr>
-                <tr>
-                  <td>GPT-5.2</td>
-                  <td>89.2</td><td>60.9</td><td>75.0</td>
-                  <td>10.6</td><td>23.3</td><td>66.0</td><td>33.3</td>
-                  <td>38.3</td><td>24.6</td><td class="best">22.9</td><td>12.8</td><td>17.9</td><td>38.1</td><td>2.0</td><td>22.4</td>
-                </tr>
-                <tr class="group-row"><td colspan="16">Agent-based Generators</td></tr>
-                <tr>
-                  <td>Qwen3.5-Plus</td>
-                  <td class="second">90.2</td><td>61.0</td><td class="second">75.6</td>
-                  <td class="second">16.5</td><td>16.5</td><td>68.3</td><td>33.8</td>
-                  <td class="best">47.5</td><td>26.9</td><td>21.7</td><td class="second">14.8</td><td class="second">22.9</td><td>48.6</td><td class="best">5.3</td><td class="second">26.8</td>
-                </tr>
-                <tr>
-                  <td>GLM-4.7</td>
-                  <td>84.8</td><td>61.4</td><td>73.1</td>
-                  <td>15.2</td><td>10.6</td><td>66.8</td><td>30.9</td>
-                  <td>42.0</td><td>25.7</td><td>18.9</td><td>12.7</td><td>19.4</td><td>43.6</td><td>2.3</td><td>23.5</td>
-                </tr>
-                <tr>
-                  <td>Claude Opus 4.6 Agent</td>
-                  <td>65.2</td><td>48.8</td><td>57.0</td>
-                  <td class="best">16.6</td><td class="second">50.7</td><td>54.3</td><td class="second">40.5</td>
-                  <td>36.6</td><td>24.1</td><td>19.0</td><td>12.9</td><td>19.2</td><td>44.1</td><td>2.2</td><td>22.6</td>
-                </tr>
-                <tr>
-                  <td>Gemini 3.0 Pro Agent</td>
-                  <td>57.5</td><td>55.5</td><td>56.5</td>
-                  <td>15.8</td><td class="best">52.3</td><td>63.4</td><td class="best">43.8</td>
-                  <td class="second">46.0</td><td class="second">27.6</td><td class="second">22.4</td><td>14.7</td><td>20.3</td><td class="second">50.0</td><td>2.5</td><td>26.2</td>
-                </tr>
-                <tr>
-                  <td>GPT-5.2 Agent</td>
-                  <td>61.7</td><td>51.9</td><td>56.8</td>
-                  <td>14.7</td><td>45.0</td><td>59.0</td><td>39.6</td>
-                  <td>44.0</td><td>25.3</td><td>21.1</td><td>14.0</td><td>20.2</td><td>46.4</td><td>2.8</td><td>24.8</td>
-                </tr>
-                <tr>
-                  <td>GPT-5.3-codex Agent</td>
-                  <td>87.8</td><td>63.4</td><td class="second">75.6</td>
-                  <td>13.6</td><td>20.3</td><td class="best">70.0</td><td>34.6</td>
-                  <td>35.9</td><td>22.4</td><td>16.4</td><td>11.2</td><td>16.5</td><td>33.1</td><td>3.4</td><td>19.8</td>
-                </tr>
-                <tr class="group-row"><td colspan="16">Skill-guided Generator</td></tr>
-                <tr>
-                  <td><b>Data-Construction-Skill</b></td>
+                <tr class="group-divider"><td colspan="9">DataFlow-based Generators</td></tr>
+                <tr><td class="left-col">DataFlow</td><td>89.7</td><td><strong>64.8</strong></td><td><strong>77.2</strong></td><td>9.9</td><td>29.4</td><td>63.6</td><td>34.3</td><td>20.1</td></tr>
+                <tr><td class="left-col">DataFlow-Skill</td><td><strong>92.0</strong></td><td>57.4</td><td>74.7</td><td>11.9</td><td>24.1</td><td>65.6</td><td>33.9</td><td>23.4</td></tr>
+                <tr class="group-divider"><td colspan="9">LLM-based Generators</td></tr>
+                <tr><td class="left-col">Claude Opus 4.6</td><td>88.0</td><td>63.2</td><td>75.6</td><td>13.9</td><td>8.1</td><td>66.8</td><td>29.6</td><td>23.1</td></tr>
+                <tr><td class="left-col">Gemini 3.0 Pro</td><td>85.9</td><td>63.5</td><td>74.7</td><td>12.2</td><td>6.0</td><td>69.1</td><td>29.1</td><td>23.8</td></tr>
+                <tr><td class="left-col">GPT-5.2</td><td>89.2</td><td>60.9</td><td>75.0</td><td>10.6</td><td>23.3</td><td>66.0</td><td>33.3</td><td>22.4</td></tr>
+                <tr class="group-divider"><td colspan="9">Agent-based Generators</td></tr>
+                <tr><td class="left-col">Qwen3.5-Plus</td><td>90.2</td><td>61.0</td><td>75.6</td><td>16.5</td><td>16.5</td><td>68.3</td><td>33.8</td><td>26.8</td></tr>
+                <tr><td class="left-col">GLM-4.7</td><td>84.8</td><td>61.4</td><td>73.1</td><td>15.2</td><td>10.6</td><td>66.8</td><td>30.9</td><td>23.5</td></tr>
+                <tr><td class="left-col">Claude Opus 4.6</td><td>65.2</td><td>48.8</td><td>57.0</td><td><strong>16.6</strong></td><td>50.7</td><td>54.3</td><td>40.5</td><td>22.6</td></tr>
+                <tr><td class="left-col">Gemini 3.0 Pro</td><td>57.5</td><td>55.5</td><td>56.5</td><td>15.8</td><td><strong>52.3</strong></td><td>63.4</td><td><strong>43.8</strong></td><td>26.2</td></tr>
+                <tr><td class="left-col">GPT-5.2</td><td>61.7</td><td>51.9</td><td>56.8</td><td>14.7</td><td>45.0</td><td>59.0</td><td>39.6</td><td>24.8</td></tr>
+                <tr><td class="left-col">GPT-5.3-codex</td><td>87.8</td><td>63.4</td><td>75.6</td><td>13.6</td><td>20.3</td><td><strong>70.0</strong></td><td>34.6</td><td>19.8</td></tr>
+                <tr class="row-ours">
+                  <td class="left-col"><strong>Skill (Claude Opus 4.6)</strong></td>
                   <td>85.5</td><td>61.7</td><td>73.6</td>
                   <td>9.9</td><td>15.3</td><td>65.4</td><td>30.2</td>
-                  <td>39.8</td><td>22.8</td><td>19.2</td><td>12.2</td><td>17.1</td><td>36.9</td><td>1.7</td><td>21.4</td>
+                  <td>21.4</td>
                 </tr>
               </tbody>
             </table>
           </div>
-        </div>
-      </details>
-
-      <details class="result-details">
-        <summary>Table 4. Llama-3.1-8B Data Construction Results on Law, Medicine, and Science</summary>
-        <div class="table-card">
-          <div class="table-header">
-            <div>
-              <h4 class="title is-5">Llama-3.1-8B: Law, Medicine, and Science</h4>
-              <p>Specialized-domain results after fine-tuning on constructed data.</p>
-            </div>
+          <div class="table-note">
+            Source: Table <code>synthetic_data_slm_qwen</code> in the paper. Science Avg aggregates 7 benchmarks (MMLU-STEM, MMLU-Pro, GPQA, SuperGPQA, ChemBench, PIQA, SciBench).
           </div>
-          <div class="table-container">
-            <table class="nice-table extra-wide">
+        </details>
+      </div>
+
+      <!-- Llama -->
+      <div class="tabpane" id="t1-llama" data-tab-group="t1">
+        <div class="callout callout-purple">
+          <div class="callout-title"><i class="fas fa-star"></i> Highlights — Llama-3.1-8B</div>
+          <ul class="callout-list">
+            <li><strong>Finance (Avg):</strong> <strong>DataFlow-Skill</strong> 36.5 — best overall; <strong>Skill</strong> 34.2 (vs. no-synthetic 15.1, ~2.3× lift).</li>
+            <li><strong>Medicine (Avg):</strong> Claude Opus 4.6 (LLM) 36.1; <strong>Skill</strong> 35.4 — close to best.</li>
+            <li><strong>Law (Avg):</strong> GPT-5.2 (LLM) 76.4 — strong gains for several methods over no-synthetic baseline (69.5).</li>
+            <li><strong>Science:</strong> No-synthetic baseline (13.2) is hardest to beat — many generators degrade Science Avg, motivating end-to-end evaluation.</li>
+            <li><strong>Math &amp; General:</strong> Most generators reduce performance vs. no-synthetic, indicating instruction-tuning before domain SFT remains an open challenge for Llama-3.1-8B.</li>
+          </ul>
+        </div>
+
+        <details class="details" open>
+          <summary>Table C. Llama-3.1-8B — Math (per benchmark) &amp; General &amp; Finance (Avg)</summary>
+          <div class="table-wrap">
+            <table class="paper-table">
               <thead>
                 <tr>
-                  <th>Training Data Generator</th>
-                  <th>LegalBench</th><th>LexGLUE</th><th>Law Avg</th>
-                  <th>MedCase</th><th>MedMCQA</th><th>MedR-Bench</th><th>Medicine Avg</th>
-                  <th>MMLU-STEM</th><th>MMLU-Pro</th><th>GPQA</th><th>SuperGPQA</th><th>ChemBench</th><th>PIQA</th><th>SciBench</th><th>Science Avg</th>
+                  <th rowspan="2" class="left-col">Generator</th>
+                  <th colspan="8" class="group-1">Math</th>
+                  <th class="group-2">General</th>
+                  <th class="group-3">Finance</th>
+                </tr>
+                <tr>
+                  <th class="group-1">GSM8K</th>
+                  <th class="group-1">AMC23</th>
+                  <th class="group-1">AIME24</th>
+                  <th class="group-1">M-Math</th>
+                  <th class="group-1">OB</th>
+                  <th class="group-1">M500</th>
+                  <th class="group-1">GK24</th>
+                  <th class="group-1">Avg</th>
+                  <th class="group-2">MMLU-R</th>
+                  <th class="group-3">Avg</th>
                 </tr>
               </thead>
               <tbody>
+                <tr class="row-baseline">
+                  <td class="left-col">No synthetic training</td>
+                  <td><strong>33.9</strong></td><td><strong>10.0</strong></td><td>0.0</td><td>6.6</td><td>3.7</td><td><strong>13.6</strong></td><td>14.3</td><td><strong>11.7</strong></td>
+                  <td><strong>67.1</strong></td>
+                  <td>15.1</td>
+                </tr>
+                <tr class="group-divider"><td colspan="11">DataFlow-based Generators</td></tr>
+                <tr><td class="left-col">DataFlow</td><td>8.4</td><td>10.0</td><td>0.0</td><td>4.8</td><td>2.5</td><td>6.1</td><td>8.8</td><td>5.8</td><td>51.1</td><td>31.4</td></tr>
+                <tr><td class="left-col">DataFlow-Skill</td><td>8.7</td><td>2.5</td><td>0.0</td><td>4.4</td><td>3.3</td><td>7.2</td><td>16.5</td><td>6.1</td><td>48.4</td><td><strong>36.5</strong></td></tr>
+                <tr class="group-divider"><td colspan="11">LLM-based Generators</td></tr>
+                <tr><td class="left-col">Claude Opus 4.6</td><td>28.7</td><td>5.0</td><td>0.0</td><td>6.2</td><td>2.8</td><td>11.2</td><td>11.0</td><td>9.3</td><td>52.9</td><td>28.4</td></tr>
+                <tr><td class="left-col">Gemini 3.0 Pro</td><td>30.7</td><td>7.5</td><td>0.0</td><td><strong>8.1</strong></td><td>3.7</td><td>12.6</td><td>14.3</td><td>11.0</td><td>50.8</td><td>31.2</td></tr>
+                <tr><td class="left-col">GPT-5.2</td><td>26.8</td><td>2.5</td><td>0.0</td><td>7.7</td><td>4.1</td><td>10.2</td><td>13.2</td><td>9.2</td><td>47.4</td><td>27.4</td></tr>
+                <tr class="group-divider"><td colspan="11">Agent-based Generators</td></tr>
+                <tr><td class="left-col">Qwen3.5-Plus</td><td>33.7</td><td>5.0</td><td>0.0</td><td>6.6</td><td><strong>4.4</strong></td><td>11.3</td><td>12.1</td><td>10.4</td><td>50.4</td><td>27.4</td></tr>
+                <tr><td class="left-col">GLM-4.7</td><td>31.8</td><td>2.5</td><td>0.0</td><td>5.9</td><td>3.1</td><td>13.0</td><td><strong>17.6</strong></td><td>10.6</td><td>49.2</td><td>30.8</td></tr>
+                <tr><td class="left-col">Claude Opus 4.6</td><td>16.4</td><td>5.0</td><td>0.0</td><td>6.6</td><td>2.5</td><td>7.7</td><td>8.8</td><td>6.7</td><td>47.5</td><td>28.9</td></tr>
+                <tr><td class="left-col">Gemini 3.0 Pro</td><td>29.6</td><td>7.5</td><td>0.0</td><td>6.2</td><td>3.6</td><td>11.5</td><td><strong>17.6</strong></td><td>10.9</td><td>47.9</td><td>29.3</td></tr>
+                <tr><td class="left-col">GPT-5.2</td><td>28.7</td><td>5.0</td><td>0.0</td><td>6.6</td><td>4.0</td><td>10.4</td><td>15.4</td><td>10.0</td><td>49.0</td><td>29.5</td></tr>
+                <tr><td class="left-col">GPT-5.3-codex</td><td>29.9</td><td>2.5</td><td>0.0</td><td>5.9</td><td>2.8</td><td>12.2</td><td>14.3</td><td>9.7</td><td>51.3</td><td>30.3</td></tr>
+                <tr class="row-ours">
+                  <td class="left-col"><strong>Skill (Claude Opus 4.6)</strong></td>
+                  <td>16.5</td><td>7.5</td><td>0.0</td><td>4.4</td><td>3.0</td><td>9.5</td><td>11.0</td><td>7.4</td>
+                  <td>51.3</td>
+                  <td>34.2</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="table-note">
+            Source: Table <code>synthetic_data_mgf_llama</code> in the paper. Bold marks the best in each column.
+          </div>
+        </details>
+
+        <details class="details">
+          <summary>Table D. Llama-3.1-8B — Law &amp; Medicine (per benchmark) &amp; Science (Avg)</summary>
+          <div class="table-wrap">
+            <table class="paper-table">
+              <thead>
                 <tr>
-                  <td><b>No synthetic training</b></td>
+                  <th rowspan="2" class="left-col">Generator</th>
+                  <th colspan="3" class="group-1">Law</th>
+                  <th colspan="4" class="group-2">Medicine</th>
+                  <th class="group-3">Science</th>
+                </tr>
+                <tr>
+                  <th class="group-1">LegalBench</th>
+                  <th class="group-1">LexGLUE</th>
+                  <th class="group-1">Avg</th>
+                  <th class="group-2">MedCaseR.</th>
+                  <th class="group-2">MedMCQA</th>
+                  <th class="group-2">MedR-Bench</th>
+                  <th class="group-2">Avg</th>
+                  <th class="group-3">Avg</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="row-baseline">
+                  <td class="left-col">No synthetic training</td>
                   <td>87.9</td><td>51.1</td><td>69.5</td>
                   <td>9.9</td><td>17.1</td><td>34.3</td><td>20.4</td>
-                  <td class="best">25.3</td><td class="best">14.7</td><td class="best">14.1</td><td class="best">8.2</td><td class="best">14.7</td><td class="second">11.4</td><td class="best">3.8</td><td class="best">13.2</td>
+                  <td><strong>13.2</strong></td>
                 </tr>
-                <tr class="group-row"><td colspan="16">DataFlow-based Generators</td></tr>
-                <tr>
-                  <td>DataFlow</td>
-                  <td>84.0</td><td>61.3</td><td>72.7</td>
-                  <td>12.3</td><td>21.3</td><td>56.1</td><td>29.9</td>
-                  <td>8.5</td><td>3.7</td><td>5.1</td><td>2.5</td><td>6.1</td><td>6.4</td><td>0.3</td><td>4.7</td>
-                </tr>
-                <tr>
-                  <td>DataFlow-Agent</td>
-                  <td>85.2</td><td>61.0</td><td>73.1</td>
-                  <td>12.4</td><td class="best">33.8</td><td>61.8</td><td class="second">36.0</td>
-                  <td>5.6</td><td>1.7</td><td>3.3</td><td>1.7</td><td>4.6</td><td>4.8</td><td>0.0</td><td>3.1</td>
-                </tr>
-                <tr class="group-row"><td colspan="16">Direct LLM-based Generators</td></tr>
-                <tr>
-                  <td>Claude Opus 4.6</td>
-                  <td>85.9</td><td>56.1</td><td>71.0</td>
-                  <td>16.3</td><td>27.2</td><td>64.8</td><td class="best">36.1</td>
-                  <td>17.1</td><td class="second">10.4</td><td>10.8</td><td class="second">6.1</td><td>9.2</td><td>9.6</td><td class="second">2.2</td><td class="second">9.3</td>
-                </tr>
-                <tr>
-                  <td>Gemini 3.0 Pro</td>
-                  <td>86.1</td><td>61.9</td><td>74.0</td>
-                  <td>16.4</td><td>16.3</td><td>67.6</td><td>33.4</td>
-                  <td>16.7</td><td>10.3</td><td>9.8</td><td class="second">6.1</td><td>10.2</td><td>9.2</td><td>1.6</td><td>9.1</td>
-                </tr>
-                <tr>
-                  <td>GPT-5.2</td>
-                  <td class="best">91.6</td><td>61.3</td><td class="best">76.4</td>
-                  <td>13.5</td><td>26.9</td><td>56.8</td><td>32.4</td>
-                  <td>14.7</td><td>7.4</td><td>10.7</td><td>4.9</td><td>9.0</td><td class="best">11.9</td><td>0.6</td><td>8.5</td>
-                </tr>
-                <tr class="group-row"><td colspan="16">Agent-based Generators</td></tr>
-                <tr>
-                  <td>Qwen3.5-Plus</td>
-                  <td>84.2</td><td class="second">62.3</td><td>73.2</td>
-                  <td>16.7</td><td>13.7</td><td class="second">69.9</td><td>33.4</td>
-                  <td class="second">17.3</td><td>9.5</td><td class="second">11.1</td><td>5.1</td><td class="second">12.1</td><td>8.9</td><td>0.9</td><td class="second">9.3</td>
-                </tr>
-                <tr>
-                  <td>GLM-4.7</td>
-                  <td>83.8</td><td>60.7</td><td>72.2</td>
-                  <td>15.6</td><td>20.0</td><td>67.1</td><td>34.2</td>
-                  <td>16.9</td><td>9.9</td><td>9.1</td><td>5.4</td><td>12.0</td><td>8.4</td><td>0.6</td><td>8.9</td>
-                </tr>
-                <tr>
-                  <td>Claude Opus 4.6 Agent</td>
-                  <td>87.4</td><td>52.1</td><td>69.8</td>
-                  <td>14.8</td><td>18.4</td><td>64.8</td><td>32.7</td>
-                  <td>17.0</td><td>9.4</td><td>10.7</td><td>5.7</td><td>10.9</td><td>7.8</td><td>1.9</td><td>9.1</td>
-                </tr>
-                <tr>
-                  <td>Gemini 3.0 Pro Agent</td>
-                  <td>86.3</td><td>60.6</td><td>73.5</td>
-                  <td>16.5</td><td>15.9</td><td class="best">70.2</td><td>34.2</td>
-                  <td>10.1</td><td>3.8</td><td>5.0</td><td>2.3</td><td>5.9</td><td>11.0</td><td>0.3</td><td>5.5</td>
-                </tr>
-                <tr>
-                  <td>GPT-5.2 Agent</td>
-                  <td>84.5</td><td>61.3</td><td>72.9</td>
-                  <td class="second">16.8</td><td>21.3</td><td>60.1</td><td>32.7</td>
-                  <td>8.1</td><td>3.3</td><td>2.9</td><td>2.2</td><td>4.4</td><td>9.1</td><td>0.2</td><td>4.3</td>
-                </tr>
-                <tr>
-                  <td>GPT-5.3-codex Agent</td>
-                  <td class="second">89.6</td><td class="best">63.1</td><td class="second">76.3</td>
-                  <td class="best">18.3</td><td>23.7</td><td>65.0</td><td>35.7</td>
-                  <td>16.4</td><td>9.0</td><td>10.4</td><td>5.3</td><td>8.5</td><td>7.7</td><td>0.6</td><td>8.3</td>
-                </tr>
-                <tr class="group-row"><td colspan="16">Skill-guided Generator</td></tr>
-                <tr>
-                  <td><b>Data-Construction-Skill</b></td>
+                <tr class="group-divider"><td colspan="9">DataFlow-based Generators</td></tr>
+                <tr><td class="left-col">DataFlow</td><td>84.0</td><td>61.3</td><td>72.7</td><td>12.3</td><td>21.3</td><td>56.1</td><td>29.9</td><td>4.7</td></tr>
+                <tr><td class="left-col">DataFlow-Skill</td><td>85.2</td><td>61.0</td><td>73.1</td><td>12.4</td><td><strong>33.8</strong></td><td>61.8</td><td>36.0</td><td>3.1</td></tr>
+                <tr class="group-divider"><td colspan="9">LLM-based Generators</td></tr>
+                <tr><td class="left-col">Claude Opus 4.6</td><td>85.9</td><td>56.1</td><td>71.0</td><td>16.3</td><td>27.2</td><td>64.8</td><td><strong>36.1</strong></td><td>9.3</td></tr>
+                <tr><td class="left-col">Gemini 3.0 Pro</td><td>86.1</td><td>61.9</td><td>74.0</td><td>16.4</td><td>16.3</td><td>67.6</td><td>33.4</td><td>9.1</td></tr>
+                <tr><td class="left-col">GPT-5.2</td><td><strong>91.6</strong></td><td>61.3</td><td><strong>76.4</strong></td><td>13.5</td><td>26.9</td><td>56.8</td><td>32.4</td><td>8.5</td></tr>
+                <tr class="group-divider"><td colspan="9">Agent-based Generators</td></tr>
+                <tr><td class="left-col">Qwen3.5-Plus</td><td>84.2</td><td>62.3</td><td>73.2</td><td>16.7</td><td>13.7</td><td>69.9</td><td>33.4</td><td>9.3</td></tr>
+                <tr><td class="left-col">GLM-4.7</td><td>83.8</td><td>60.7</td><td>72.2</td><td>15.6</td><td>20.0</td><td>67.1</td><td>34.2</td><td>8.9</td></tr>
+                <tr><td class="left-col">Claude Opus 4.6</td><td>87.4</td><td>52.1</td><td>69.8</td><td>14.8</td><td>18.4</td><td>64.8</td><td>32.7</td><td>9.1</td></tr>
+                <tr><td class="left-col">Gemini 3.0 Pro</td><td>86.3</td><td>60.6</td><td>73.5</td><td>16.5</td><td>15.9</td><td><strong>70.2</strong></td><td>34.2</td><td>5.5</td></tr>
+                <tr><td class="left-col">GPT-5.2</td><td>84.5</td><td>61.3</td><td>72.9</td><td>16.8</td><td>21.3</td><td>60.1</td><td>32.7</td><td>4.3</td></tr>
+                <tr><td class="left-col">GPT-5.3-codex</td><td>89.6</td><td><strong>63.1</strong></td><td>76.3</td><td><strong>18.3</strong></td><td>23.7</td><td>65.0</td><td>35.7</td><td>8.3</td></tr>
+                <tr class="row-ours">
+                  <td class="left-col"><strong>Skill (Claude Opus 4.6)</strong></td>
                   <td>86.6</td><td>53.7</td><td>70.2</td>
-                  <td>13.7</td><td class="second">27.9</td><td>64.6</td><td>35.4</td>
-                  <td>16.2</td><td>8.5</td><td>9.1</td><td>4.8</td><td>7.5</td><td>5.9</td><td>0.2</td><td>7.5</td>
+                  <td>13.7</td><td>27.9</td><td>64.6</td><td>35.4</td>
+                  <td>7.5</td>
                 </tr>
               </tbody>
             </table>
           </div>
+          <div class="table-note">
+            Source: Table <code>synthetic_data_slm_llama</code> in the paper.
+          </div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========= TRACK 2 RESULTS ========= -->
+  <section id="track2-results" class="section">
+    <div class="container">
+      <h2 class="section-title"><span class="section-num">07</span>Track 2 · Data Quality Evaluation Results</h2>
+      <p class="lead">
+        For each metric \(Q\), we report Pearson correlation \(\rho\) between metric scores and downstream performance across three base
+        models per domain. <strong>DAS</strong> (defined as \(-d_{\mathrm{MMD}}\) to a domain proxy) achieves consistent significant negative
+        correlations with empirical performance in reasoning-intensive domains. Values are signed; <strong>↓</strong> on a metric column header means
+        more-negative is better (DAS / MMD); <strong>↑</strong> means more-positive is better (quality/diversity scorers).
+      </p>
+
+      <div class="legend">
+        <span class="legend-item"><span class="legend-swatch sw-neg"></span> negative correlation</span>
+        <span class="legend-item"><span class="legend-swatch sw-pos"></span> positive correlation</span>
+        <span class="legend-item"><span class="legend-swatch sw-sig"></span> underline = significant &amp; theoretically consistent (p &lt; 0.05)</span>
+      </div>
+
+      <details class="details" open>
+        <summary>Table E. General · Math · Science — full Pearson correlations &amp; runtime</summary>
+        <div class="table-wrap">
+          <table class="corr-table">
+            <thead>
+              <tr>
+                <th rowspan="2" class="left-col">Metric</th>
+                <th rowspan="2">Time (s)</th>
+                <th colspan="4" class="group-1">General</th>
+                <th colspan="4" class="group-2">Math</th>
+                <th colspan="4" class="group-3">Science</th>
+              </tr>
+              <tr>
+                <th class="group-1">Qwen</th><th class="group-1">Llama</th><th class="group-1">Mistral</th><th class="group-1">Avg</th>
+                <th class="group-2">Qwen</th><th class="group-2">Llama</th><th class="group-2">Mistral</th><th class="group-2">Avg</th>
+                <th class="group-3">Qwen</th><th class="group-3">Llama</th><th class="group-3">Mistral</th><th class="group-3">Avg</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="grp-head"><td colspan="14">Distribution-based</td></tr>
+              <tr class="row-ours">
+                <td class="left-col"><strong>MMD (DAS = −MMD)</strong></td>
+                <td>306.02</td>
+                <td class="neg sig">−0.64</td><td class="neg sig">−0.65</td><td class="neg sig">−0.74</td><td class="neg best">−0.68</td>
+                <td class="neg sig">−0.72</td><td class="neg sig">−0.93</td><td class="neg sig">−0.94</td><td class="neg best">−0.86</td>
+                <td class="neg">−0.53</td><td class="neg sig">−0.82</td><td class="neg sig">−0.80</td><td class="neg">−0.72</td>
+              </tr>
+              <tr class="grp-head"><td colspan="14">Quality-based</td></tr>
+              <tr><td class="left-col">Qurating-WritingStyle</td><td rowspan="4">84.65</td>
+                <td class="pos">0.17</td><td class="pos">0.36</td><td class="pos">0.38</td><td class="pos">0.30</td>
+                <td class="neg">−0.48</td><td class="neg">−0.33</td><td class="neg">−0.46</td><td class="neg">−0.42</td>
+                <td class="neg">−0.10</td><td class="neg">−0.16</td><td class="pos">0.04</td><td class="neg">−0.07</td>
+              </tr>
+              <tr><td class="left-col">Qurating-Expertise</td>
+                <td class="neg">−0.17</td><td class="neg">−0.37</td><td class="neg">−0.42</td><td class="neg">−0.32</td>
+                <td class="pos sig">0.61</td><td class="pos sig">0.76</td><td class="pos sig">0.71</td><td class="pos">0.69</td>
+                <td class="pos">0.56</td><td class="pos sig">0.76</td><td class="pos sig">0.83</td><td class="pos best">0.72</td>
+              </tr>
+              <tr><td class="left-col">Qurating-FactsTrivia</td>
+                <td class="pos">0.03</td><td class="pos">0.10</td><td class="pos">0.02</td><td class="pos">0.05</td>
+                <td class="neg">−0.35</td><td class="neg">−0.04</td><td class="neg">−0.20</td><td class="neg">−0.20</td>
+                <td class="neg">−0.08</td><td class="pos">0.14</td><td class="pos">0.32</td><td class="pos">0.13</td>
+              </tr>
+              <tr><td class="left-col">Qurating-Educational</td>
+                <td class="neg">−0.03</td><td class="pos">0.17</td><td class="pos">0.13</td><td class="pos">0.09</td>
+                <td class="neg">−0.23</td><td class="pos">0.04</td><td class="neg">−0.10</td><td class="neg">−0.10</td>
+                <td class="pos">0.01</td><td class="pos">0.17</td><td class="pos">0.34</td><td class="pos">0.18</td>
+              </tr>
+              <tr><td class="left-col">BERTVendi</td><td rowspan="2">459.37</td>
+                <td class="pos">0.38</td><td class="pos">0.47</td><td class="pos sig">0.58</td><td class="pos">0.47</td>
+                <td class="neg">−0.69</td><td class="neg">−0.40</td><td class="neg">−0.54</td><td class="neg">−0.54</td>
+                <td class="neg">−0.41</td><td class="neg">−0.10</td><td class="neg">−0.07</td><td class="neg">−0.19</td>
+              </tr>
+              <tr><td class="left-col">SimCSEVendi</td>
+                <td class="pos">0.30</td><td class="pos">0.46</td><td class="pos sig">0.55</td><td class="pos">0.44</td>
+                <td class="neg">−0.80</td><td class="neg">−0.50</td><td class="neg">−0.63</td><td class="neg">−0.65</td>
+                <td class="neg">−0.66</td><td class="neg">−0.43</td><td class="neg">−0.34</td><td class="neg">−0.48</td>
+              </tr>
+              <tr><td class="left-col">Deita-Quality</td><td>434.99</td>
+                <td class="pos">0.06</td><td class="pos">0.46</td><td class="pos">0.18</td><td class="pos">0.23</td>
+                <td class="neg">−0.42</td><td class="neg">−0.46</td><td class="neg">−0.54</td><td class="neg">−0.47</td>
+                <td class="pos">0.08</td><td class="neg">−0.26</td><td class="neg">−0.13</td><td class="neg">−0.10</td>
+              </tr>
+              <tr><td class="left-col">RewardModel</td><td>109.61</td>
+                <td class="pos sig">0.56</td><td class="pos sig">0.67</td><td class="pos sig">0.54</td><td class="pos">0.59</td>
+                <td class="neg">−0.71</td><td class="neg">−0.81</td><td class="neg">−0.85</td><td class="neg">−0.79</td>
+                <td class="neg">−0.39</td><td class="neg">−0.54</td><td class="neg">−0.32</td><td class="neg">−0.42</td>
+              </tr>
+              <tr><td class="left-col">Superfiltering</td><td>40.05</td>
+                <td class="pos">0.13</td><td class="pos">0.25</td><td class="pos">0.30</td><td class="pos">0.23</td>
+                <td class="neg">−0.11</td><td class="neg">−0.21</td><td class="neg">−0.29</td><td class="neg">−0.21</td>
+                <td class="pos">0.02</td><td class="neg">−0.10</td><td class="neg">−0.13</td><td class="neg">−0.07</td>
+              </tr>
+              <tr><td class="left-col">FineWebEdu</td><td>11.67</td>
+                <td class="neg">−0.43</td><td class="neg">−0.43</td><td class="neg">−0.37</td><td class="neg">−0.41</td>
+                <td class="pos">0.42</td><td class="pos sig">0.74</td><td class="pos sig">0.65</td><td class="pos">0.60</td>
+                <td class="pos">0.09</td><td class="pos">0.45</td><td class="pos">0.59</td><td class="pos">0.37</td>
+              </tr>
+              <tr><td class="left-col">PairQual</td><td>12.34</td>
+                <td class="neg">−0.03</td><td class="neg">−0.03</td><td class="neg">−0.15</td><td class="neg">−0.07</td>
+                <td class="neg">−0.16</td><td class="pos">0.06</td><td class="neg">−0.06</td><td class="neg">−0.05</td>
+                <td class="pos">0.19</td><td class="pos">0.23</td><td class="pos">0.40</td><td class="pos">0.27</td>
+              </tr>
+              <tr><td class="left-col">Perplexity</td><td>40.60</td>
+                <td class="pos">0.47</td><td class="pos">0.43</td><td class="pos">0.48</td><td class="pos">0.46</td>
+                <td class="neg">−0.71</td><td class="neg">−0.56</td><td class="neg">−0.62</td><td class="neg">−0.63</td>
+                <td class="neg">−0.59</td><td class="neg">−0.32</td><td class="neg">−0.44</td><td class="neg">−0.45</td>
+              </tr>
+              <tr class="grp-head"><td colspan="14">Diversity-based</td></tr>
+              <tr><td class="left-col">MTLD</td><td rowspan="2">2.59</td>
+                <td class="pos">0.48</td><td class="pos">0.38</td><td class="pos">0.32</td><td class="pos">0.39</td>
+                <td class="neg">−0.58</td><td class="neg">−0.59</td><td class="neg">−0.67</td><td class="neg">−0.62</td>
+                <td class="neg">−0.48</td><td class="neg">−0.67</td><td class="neg">−0.49</td><td class="neg">−0.55</td>
+              </tr>
+              <tr><td class="left-col">HD-D</td>
+                <td class="pos">0.17</td><td class="neg">−0.08</td><td class="pos">0.02</td><td class="pos">0.03</td>
+                <td class="neg">−0.34</td><td class="neg">−0.17</td><td class="neg">−0.25</td><td class="neg">−0.25</td>
+                <td class="neg">−0.64</td><td class="neg">−0.61</td><td class="neg">−0.44</td><td class="neg">−0.56</td>
+              </tr>
+              <tr><td class="left-col">Task2Vec</td><td>7.93</td>
+                <td class="neg">−0.04</td><td class="pos">0.16</td><td class="pos">0.17</td><td class="pos">0.10</td>
+                <td class="neg">−0.48</td><td class="neg">−0.09</td><td class="neg">−0.25</td><td class="neg">−0.27</td>
+                <td class="neg">−0.65</td><td class="neg">−0.36</td><td class="neg">−0.21</td><td class="neg">−0.41</td>
+              </tr>
+              <tr><td class="left-col">Ngram</td><td>1.06</td>
+                <td class="neg">−0.01</td><td class="neg">−0.05</td><td class="neg">0.00</td><td class="neg">−0.02</td>
+                <td class="neg">−0.31</td><td class="pos">0.12</td><td class="neg">−0.05</td><td class="neg">−0.08</td>
+                <td class="neg">−0.22</td><td class="pos">0.04</td><td class="pos">0.22</td><td class="pos">0.01</td>
+              </tr>
+              <tr><td class="left-col">Deita-Complexity</td><td>344.34</td>
+                <td class="pos sig">0.52</td><td class="pos">0.25</td><td class="pos">0.26</td><td class="pos">0.34</td>
+                <td class="neg">−0.19</td><td class="neg">−0.34</td><td class="neg">−0.32</td><td class="neg">−0.28</td>
+                <td class="pos">0.05</td><td class="pos">0.27</td><td class="pos">0.32</td><td class="pos">0.22</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="table-note">
+          Source: Table <code>eval_results_gms</code> in the paper. Underline indicates statistically significant correlation (\(p &lt; 0.05\))
+          consistent with theoretical expectation. Bold marks the best Avg per domain among consistent metrics. <strong>MMD</strong> achieves the
+          strongest consistent average correlation in <em>General</em> (\(-0.68\)) and <em>Math</em> (\(-0.86\)), and is best for <em>Science</em>
+          among distribution-based predictors.
         </div>
       </details>
 
-      <details class="result-details" open>
-        <summary>Table 5. Data Quality Evaluation Results on General, Math, and Science</summary>
-        <div class="table-card">
-          <div class="table-header">
-            <div>
-              <h4 class="title is-5">Pearson Correlation with Downstream Performance</h4>
-              <p>Results on General, Math, and Science. Time denotes average processing duration per dataset.</p>
-            </div>
-          </div>
-          <div class="table-container">
-            <table class="nice-table wide">
-              <thead>
-                <tr>
-                  <th>Algorithm</th><th>Time (s)</th>
-                  <th>General Qwen</th><th>General Llama</th><th>General Mistral</th><th>General Avg</th>
-                  <th>Math Qwen</th><th>Math Llama</th><th>Math Mistral</th><th>Math Avg</th>
-                  <th>Science Qwen</th><th>Science Llama</th><th>Science Mistral</th><th>Science Avg</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr class="group-row"><td colspan="14">Distribution Based</td></tr>
-                <tr>
-                  <td><b>MMD / DAS</b></td><td>306.02</td>
-                  <td class="negative">0.64</td><td class="negative">0.65</td><td class="negative">0.74</td><td class="best">0.68</td>
-                  <td class="negative">0.72</td><td class="negative">0.93</td><td class="negative">0.94</td><td class="best">0.86</td>
-                  <td class="negative">0.53</td><td class="negative">0.82</td><td class="negative">0.80</td><td class="best">0.72</td>
-                </tr>
-                <tr class="group-row"><td colspan="14">Quality Based</td></tr>
-                <tr><td>Qurating-WritingStyle</td><td>84.65</td><td class="positive">0.17</td><td class="positive">0.36</td><td class="positive">0.38</td><td>0.30</td><td class="negative">0.48</td><td class="negative">0.33</td><td class="negative">0.46</td><td>0.42</td><td class="negative">0.10</td><td class="negative">0.16</td><td class="positive">0.04</td><td>0.07</td></tr>
-                <tr><td>Qurating-Expertise</td><td>84.65</td><td class="negative">0.17</td><td class="negative">0.37</td><td class="negative">0.42</td><td>0.32</td><td class="positive">0.61</td><td class="positive">0.76</td><td class="positive">0.71</td><td>0.69</td><td class="positive">0.56</td><td class="positive">0.76</td><td class="positive">0.83</td><td class="best">0.72</td></tr>
-                <tr><td>Qurating-FactsTrivia</td><td>84.65</td><td class="positive">0.03</td><td class="positive">0.10</td><td class="positive">0.02</td><td>0.05</td><td class="negative">0.35</td><td class="negative">0.04</td><td class="negative">0.20</td><td>0.20</td><td class="negative">0.08</td><td class="positive">0.14</td><td class="positive">0.32</td><td>0.13</td></tr>
-                <tr><td>Qurating-Educational</td><td>84.65</td><td class="negative">0.03</td><td class="positive">0.17</td><td class="positive">0.13</td><td>0.09</td><td class="negative">0.23</td><td class="positive">0.04</td><td class="negative">0.10</td><td>0.10</td><td class="positive">0.01</td><td class="positive">0.17</td><td class="positive">0.34</td><td>0.18</td></tr>
-                <tr><td>BERTVendi</td><td>459.37</td><td class="positive">0.38</td><td class="positive">0.47</td><td class="positive">0.58</td><td>0.47</td><td class="negative">0.69</td><td class="negative">0.40</td><td class="negative">0.54</td><td>0.54</td><td class="negative">0.41</td><td class="negative">0.10</td><td class="negative">0.07</td><td>0.19</td></tr>
-                <tr><td>SimCSEVendi</td><td>459.37</td><td class="positive">0.30</td><td class="positive">0.46</td><td class="positive">0.55</td><td>0.44</td><td class="negative">0.80</td><td class="negative">0.50</td><td class="negative">0.63</td><td>0.65</td><td class="negative">0.66</td><td class="negative">0.43</td><td class="negative">0.34</td><td>0.48</td></tr>
-                <tr><td>Deita-Quality</td><td>434.99</td><td class="positive">0.06</td><td class="positive">0.46</td><td class="positive">0.18</td><td>0.23</td><td class="negative">0.42</td><td class="negative">0.46</td><td class="negative">0.54</td><td>0.47</td><td class="positive">0.08</td><td class="negative">0.26</td><td class="negative">0.13</td><td>0.10</td></tr>
-                <tr><td>RewardModel</td><td>109.61</td><td class="positive">0.56</td><td class="positive">0.67</td><td class="positive">0.54</td><td>0.59</td><td class="negative">0.71</td><td class="negative">0.81</td><td class="negative">0.85</td><td>0.79</td><td class="negative">0.39</td><td class="negative">0.54</td><td class="negative">0.32</td><td>0.42</td></tr>
-                <tr><td>Superfiltering</td><td>40.05</td><td class="positive">0.13</td><td class="positive">0.25</td><td class="positive">0.30</td><td>0.23</td><td class="negative">0.11</td><td class="negative">0.21</td><td class="negative">0.29</td><td>0.21</td><td class="positive">0.02</td><td class="negative">0.10</td><td class="negative">0.13</td><td>0.07</td></tr>
-                <tr><td>FineWebEdu</td><td>11.67</td><td class="negative">0.43</td><td class="negative">0.43</td><td class="negative">0.37</td><td>0.41</td><td class="positive">0.42</td><td class="positive">0.74</td><td class="positive">0.65</td><td>0.60</td><td class="positive">0.09</td><td class="positive">0.45</td><td class="positive">0.59</td><td>0.37</td></tr>
-                <tr><td>PairQual</td><td>12.34</td><td class="negative">0.03</td><td class="negative">0.03</td><td class="negative">0.15</td><td>0.07</td><td class="negative">0.16</td><td class="positive">0.06</td><td class="negative">0.06</td><td>0.05</td><td class="positive">0.19</td><td class="positive">0.23</td><td class="positive">0.40</td><td>0.27</td></tr>
-                <tr><td>Perplexity</td><td>40.60</td><td class="positive">0.47</td><td class="positive">0.43</td><td class="positive">0.48</td><td>0.46</td><td class="negative">0.71</td><td class="negative">0.56</td><td class="negative">0.62</td><td>0.63</td><td class="negative">0.59</td><td class="negative">0.32</td><td class="negative">0.44</td><td>0.45</td></tr>
-                <tr class="group-row"><td colspan="14">Diversity Based</td></tr>
-                <tr><td>MTLD</td><td>2.59</td><td class="positive">0.48</td><td class="positive">0.38</td><td class="positive">0.32</td><td>0.39</td><td class="negative">0.58</td><td class="negative">0.59</td><td class="negative">0.67</td><td>0.62</td><td class="negative">0.48</td><td class="negative">0.67</td><td class="negative">0.49</td><td>0.55</td></tr>
-                <tr><td>HD-D</td><td>2.59</td><td class="positive">0.17</td><td class="negative">0.08</td><td class="positive">0.02</td><td>0.03</td><td class="negative">0.34</td><td class="negative">0.17</td><td class="negative">0.25</td><td>0.25</td><td class="negative">0.64</td><td class="negative">0.61</td><td class="negative">0.44</td><td>0.56</td></tr>
-                <tr><td>Task2Vec</td><td>7.93</td><td class="negative">0.04</td><td class="positive">0.16</td><td class="positive">0.17</td><td>0.10</td><td class="negative">0.48</td><td class="negative">0.09</td><td class="negative">0.25</td><td>0.27</td><td class="negative">0.65</td><td class="negative">0.36</td><td class="negative">0.21</td><td>0.41</td></tr>
-                <tr><td>Ngram</td><td>1.06</td><td class="negative">0.01</td><td class="negative">0.05</td><td class="negative">0.00</td><td>0.02</td><td class="negative">0.31</td><td class="positive">0.12</td><td class="negative">0.05</td><td>0.08</td><td class="negative">0.22</td><td class="positive">0.04</td><td class="positive">0.22</td><td>0.01</td></tr>
-                <tr><td>Deita-Complexity</td><td>344.34</td><td class="positive">0.52</td><td class="positive">0.25</td><td class="positive">0.26</td><td>0.34</td><td class="negative">0.19</td><td class="negative">0.34</td><td class="negative">0.32</td><td>0.28</td><td class="positive">0.05</td><td class="positive">0.27</td><td class="positive">0.32</td><td>0.22</td></tr>
-              </tbody>
-            </table>
-          </div>
+      <details class="details">
+        <summary>Table F. Medical · Finance · Law — full Pearson correlations</summary>
+        <div class="table-wrap">
+          <table class="corr-table">
+            <thead>
+              <tr>
+                <th rowspan="2" class="left-col">Metric</th>
+                <th colspan="4" class="group-1">Medical</th>
+                <th colspan="4" class="group-2">Finance</th>
+                <th colspan="4" class="group-3">Law</th>
+              </tr>
+              <tr>
+                <th class="group-1">Qwen</th><th class="group-1">Llama</th><th class="group-1">Mistral</th><th class="group-1">Avg</th>
+                <th class="group-2">Qwen</th><th class="group-2">Llama</th><th class="group-2">Mistral</th><th class="group-2">Avg</th>
+                <th class="group-3">Qwen</th><th class="group-3">Llama</th><th class="group-3">Mistral</th><th class="group-3">Avg</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="grp-head"><td colspan="13">Distribution-based</td></tr>
+              <tr class="row-ours">
+                <td class="left-col"><strong>MMD (DAS = −MMD)</strong></td>
+                <td class="neg sig">−0.73</td><td class="neg sig">−0.87</td><td class="neg sig">−0.72</td><td class="neg best">−0.77</td>
+                <td class="pos">0.18</td><td class="neg">−0.57</td><td class="neg">−0.14</td><td class="neg">−0.18</td>
+                <td class="pos">0.50</td><td class="pos">0.17</td><td class="pos">0.40</td><td class="pos">0.36</td>
+              </tr>
+              <tr class="grp-head"><td colspan="13">Quality-based</td></tr>
+              <tr><td class="left-col">Qurating-WritingStyle</td>
+                <td class="neg">−0.10</td><td class="pos">0.20</td><td class="neg">−0.06</td><td class="pos">0.01</td>
+                <td class="pos">0.03</td><td class="pos">0.13</td><td class="pos">0.33</td><td class="pos">0.16</td>
+                <td class="pos sig">0.63</td><td class="neg">−0.08</td><td class="pos sig">0.64</td><td class="pos">0.40</td>
+              </tr>
+              <tr><td class="left-col">Qurating-Expertise</td>
+                <td class="pos">0.56</td><td class="pos sig">0.73</td><td class="pos sig">0.66</td><td class="pos">0.65</td>
+                <td class="neg">−0.04</td><td class="pos">0.13</td><td class="pos">0.60</td><td class="pos">0.23</td>
+                <td class="pos sig">0.72</td><td class="neg">−0.37</td><td class="pos">0.37</td><td class="pos">0.24</td>
+              </tr>
+              <tr><td class="left-col">Qurating-FactsTrivia</td>
+                <td class="pos">0.31</td><td class="pos sig">0.66</td><td class="pos">0.36</td><td class="pos">0.44</td>
+                <td class="neg">−0.06</td><td class="pos">0.23</td><td class="pos">0.47</td><td class="pos">0.21</td>
+                <td class="pos">0.58</td><td class="neg">−0.15</td><td class="pos sig">0.70</td><td class="pos">0.37</td>
+              </tr>
+              <tr><td class="left-col">Qurating-Educational</td>
+                <td class="pos">0.05</td><td class="pos">0.40</td><td class="pos">0.14</td><td class="pos">0.20</td>
+                <td class="neg">−0.05</td><td class="pos">0.10</td><td class="pos">0.49</td><td class="pos">0.18</td>
+                <td class="pos">0.57</td><td class="neg">−0.27</td><td class="pos sig">0.64</td><td class="pos">0.31</td>
+              </tr>
+              <tr><td class="left-col">Deita-Quality</td>
+                <td class="pos">0.57</td><td class="pos sig">0.63</td><td class="pos sig">0.68</td><td class="pos">0.63</td>
+                <td class="neg">−0.18</td><td class="neg">−0.45</td><td class="pos">0.15</td><td class="neg">−0.16</td>
+                <td class="pos">0.46</td><td class="neg">−0.59</td><td class="pos">0.24</td><td class="pos">0.04</td>
+              </tr>
+              <tr><td class="left-col">RewardModel</td>
+                <td class="pos">0.26</td><td class="pos">0.32</td><td class="pos">0.23</td><td class="pos">0.27</td>
+                <td class="neg">−0.07</td><td class="neg">−0.30</td><td class="neg">−0.06</td><td class="neg">−0.14</td>
+                <td class="pos">0.43</td><td class="neg">−0.08</td><td class="pos">0.51</td><td class="pos">0.28</td>
+              </tr>
+              <tr><td class="left-col">Superfiltering</td>
+                <td class="neg">−0.29</td><td class="neg">−0.22</td><td class="neg">−0.43</td><td class="neg">−0.31</td>
+                <td class="pos sig">0.71</td><td class="pos">0.60</td><td class="pos sig">0.69</td><td class="pos best">0.67</td>
+                <td class="pos">0.52</td><td class="pos">0.52</td><td class="pos">0.41</td><td class="pos">0.48</td>
+              </tr>
+              <tr><td class="left-col">FineWebEdu</td>
+                <td class="pos">0.18</td><td class="pos">0.55</td><td class="pos">0.29</td><td class="pos">0.34</td>
+                <td class="neg">−0.23</td><td class="pos">0.16</td><td class="pos">0.48</td><td class="pos">0.13</td>
+                <td class="pos">0.57</td><td class="neg">−0.22</td><td class="pos">0.59</td><td class="pos">0.31</td>
+              </tr>
+              <tr><td class="left-col">PairQual</td>
+                <td class="pos">0.44</td><td class="pos sig">0.71</td><td class="pos">0.53</td><td class="pos">0.56</td>
+                <td class="neg">−0.10</td><td class="pos">0.09</td><td class="pos">0.39</td><td class="pos">0.13</td>
+                <td class="pos sig">0.63</td><td class="neg">−0.28</td><td class="pos">0.61</td><td class="pos">0.32</td>
+              </tr>
+              <tr><td class="left-col">Perplexity</td>
+                <td class="neg">−0.53</td><td class="neg">−0.30</td><td class="neg">−0.64</td><td class="neg">−0.49</td>
+                <td class="pos">0.56</td><td class="pos">0.59</td><td class="pos">0.35</td><td class="pos">0.50</td>
+                <td class="pos">0.06</td><td class="pos">0.33</td><td class="pos">0.53</td><td class="pos">0.31</td>
+              </tr>
+              <tr><td class="left-col">BERTVendi</td>
+                <td class="neg">−0.64</td><td class="neg">−0.26</td><td class="neg">−0.56</td><td class="neg">−0.49</td>
+                <td class="pos">0.33</td><td class="pos sig">0.79</td><td class="pos">0.23</td><td class="pos">0.45</td>
+                <td class="pos">0.42</td><td class="pos">0.20</td><td class="pos">0.44</td><td class="pos">0.35</td>
+              </tr>
+              <tr><td class="left-col">SimCSEVendi</td>
+                <td class="neg">−0.47</td><td class="neg">−0.09</td><td class="neg">−0.50</td><td class="neg">−0.35</td>
+                <td class="pos">0.13</td><td class="pos">0.54</td><td class="pos">0.16</td><td class="pos">0.28</td>
+                <td class="pos">0.28</td><td class="pos">0.15</td><td class="pos sig">0.74</td><td class="pos">0.39</td>
+              </tr>
+              <tr class="grp-head"><td colspan="13">Diversity-based</td></tr>
+              <tr><td class="left-col">Task2Vec</td>
+                <td class="pos">0.06</td><td class="pos">0.39</td><td class="neg">−0.03</td><td class="pos">0.14</td>
+                <td class="neg">−0.26</td><td class="pos">0.20</td><td class="pos">0.29</td><td class="pos">0.08</td>
+                <td class="pos">0.12</td><td class="neg">−0.12</td><td class="pos sig">0.91</td><td class="pos">0.30</td>
+              </tr>
+              <tr><td class="left-col">MTLD</td>
+                <td class="pos">0.27</td><td class="pos">0.48</td><td class="pos">0.23</td><td class="pos">0.33</td>
+                <td class="pos">0.17</td><td class="pos">0.47</td><td class="pos">0.37</td><td class="pos">0.34</td>
+                <td class="pos sig">0.71</td><td class="pos">0.26</td><td class="pos">0.59</td><td class="pos best">0.52</td>
+              </tr>
+              <tr><td class="left-col">HD-D</td>
+                <td class="pos">0.20</td><td class="pos">0.55</td><td class="pos">0.16</td><td class="pos">0.30</td>
+                <td class="pos">0.15</td><td class="pos">0.48</td><td class="pos">0.40</td><td class="pos">0.34</td>
+                <td class="pos">0.45</td><td class="pos">0.03</td><td class="pos sig">0.84</td><td class="pos">0.44</td>
+              </tr>
+              <tr><td class="left-col">Ngram</td>
+                <td class="pos">0.12</td><td class="pos">0.54</td><td class="pos">0.18</td><td class="pos">0.28</td>
+                <td class="neg">−0.02</td><td class="pos">0.50</td><td class="pos">0.42</td><td class="pos">0.30</td>
+                <td class="pos">0.54</td><td class="neg">−0.01</td><td class="pos sig">0.66</td><td class="pos">0.40</td>
+              </tr>
+              <tr><td class="left-col">Deita-Complexity</td>
+                <td class="neg">−0.10</td><td class="neg">−0.02</td><td class="neg">−0.09</td><td class="neg">−0.07</td>
+                <td class="pos">0.57</td><td class="pos">0.06</td><td class="pos">0.44</td><td class="pos">0.36</td>
+                <td class="pos">0.55</td><td class="pos">0.01</td><td class="pos">0.25</td><td class="pos">0.27</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="table-note">
+          Source: Table <code>eval_results_mfl</code> in the paper. <strong>MMD</strong> is the strongest consistent predictor in <em>Medical</em>
+          (\(-0.77\)). In <em>Finance</em> the best is <strong>Superfiltering</strong> (\(+0.67\)); in <em>Law</em> the best is <strong>MTLD</strong> (\(+0.52\)).
+          <em>No single metric dominates all six domains</em> — a key open challenge motivated by DataPrep-Bench.
         </div>
       </details>
 
-      <details class="result-details" open>
-        <summary>Table 6. Data Quality Evaluation Results on Medical, Finance, and Law</summary>
-        <div class="table-card">
-          <div class="table-header">
-            <div>
-              <h4 class="title is-5">Pearson Correlation with Downstream Performance</h4>
-              <p>Results on Medical, Finance, and Law.</p>
-            </div>
+      <!-- Avg correlation panel -->
+      <div class="highlight-panel">
+        <div class="highlight-title">DAS Pearson correlation with downstream performance, per domain</div>
+        <div class="highlight-bars">
+          <div class="bar-row">
+            <div class="bar-label">Math</div>
+            <div class="bar-track"><div class="bar-fill" style="--w:86%"></div></div>
+            <div class="bar-val">+0.86</div>
           </div>
-          <div class="table-container">
-            <table class="nice-table wide">
-              <thead>
-                <tr>
-                  <th>Algorithm</th>
-                  <th>Medical Qwen</th><th>Medical Llama</th><th>Medical Mistral</th><th>Medical Avg</th>
-                  <th>Finance Qwen</th><th>Finance Llama</th><th>Finance Mistral</th><th>Finance Avg</th>
-                  <th>Law Qwen</th><th>Law Llama</th><th>Law Mistral</th><th>Law Avg</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr class="group-row"><td colspan="13">Distribution Based</td></tr>
-                <tr><td><b>MMD / DAS</b></td><td class="negative">0.73</td><td class="negative">0.87</td><td class="negative">0.72</td><td class="best">0.77</td><td class="positive">0.18</td><td class="negative">0.57</td><td class="negative">0.14</td><td>0.18</td><td class="positive">0.50</td><td class="positive">0.17</td><td class="positive">0.40</td><td>0.36</td></tr>
-                <tr class="group-row"><td colspan="13">Quality Based</td></tr>
-                <tr><td>Qurating-WritingStyle</td><td class="negative">0.10</td><td class="positive">0.20</td><td class="negative">0.06</td><td>0.01</td><td class="positive">0.03</td><td class="positive">0.13</td><td class="positive">0.33</td><td>0.16</td><td class="positive">0.63</td><td class="negative">0.08</td><td class="positive">0.64</td><td>0.40</td></tr>
-                <tr><td>Qurating-Expertise</td><td class="positive">0.56</td><td class="positive">0.73</td><td class="positive">0.66</td><td>0.65</td><td class="negative">0.04</td><td class="positive">0.13</td><td class="positive">0.60</td><td>0.23</td><td class="positive">0.72</td><td class="negative">0.37</td><td class="positive">0.37</td><td>0.24</td></tr>
-                <tr><td>Qurating-FactsTrivia</td><td class="positive">0.31</td><td class="positive">0.66</td><td class="positive">0.36</td><td>0.44</td><td class="negative">0.06</td><td class="positive">0.23</td><td class="positive">0.47</td><td>0.21</td><td class="positive">0.58</td><td class="negative">0.15</td><td class="positive">0.70</td><td>0.37</td></tr>
-                <tr><td>Qurating-Educational</td><td class="positive">0.05</td><td class="positive">0.40</td><td class="positive">0.14</td><td>0.20</td><td class="negative">0.05</td><td class="positive">0.10</td><td class="positive">0.49</td><td>0.18</td><td class="positive">0.57</td><td class="negative">0.27</td><td class="positive">0.64</td><td>0.31</td></tr>
-                <tr><td>Deita-Quality</td><td class="positive">0.57</td><td class="positive">0.63</td><td class="positive">0.68</td><td>0.63</td><td class="negative">0.18</td><td class="negative">0.45</td><td class="positive">0.15</td><td>0.16</td><td class="positive">0.46</td><td class="negative">0.59</td><td class="positive">0.24</td><td>0.04</td></tr>
-                <tr><td>RewardModel</td><td class="positive">0.26</td><td class="positive">0.32</td><td class="positive">0.23</td><td>0.27</td><td class="negative">0.07</td><td class="negative">0.30</td><td class="negative">0.06</td><td>0.14</td><td class="positive">0.43</td><td class="negative">0.08</td><td class="positive">0.51</td><td>0.28</td></tr>
-                <tr><td>Superfiltering</td><td class="negative">0.29</td><td class="negative">0.22</td><td class="negative">0.43</td><td>0.31</td><td class="positive">0.71</td><td class="positive">0.60</td><td class="positive">0.69</td><td class="best">0.67</td><td class="positive">0.52</td><td class="positive">0.52</td><td class="positive">0.41</td><td>0.48</td></tr>
-                <tr><td>FineWebEdu</td><td class="positive">0.18</td><td class="positive">0.55</td><td class="positive">0.29</td><td>0.34</td><td class="negative">0.23</td><td class="positive">0.16</td><td class="positive">0.48</td><td>0.13</td><td class="positive">0.57</td><td class="negative">0.22</td><td class="positive">0.59</td><td>0.31</td></tr>
-                <tr><td>PairQual</td><td class="positive">0.44</td><td class="positive">0.71</td><td class="positive">0.53</td><td>0.56</td><td class="negative">0.10</td><td class="positive">0.09</td><td class="positive">0.39</td><td>0.13</td><td class="positive">0.63</td><td class="negative">0.28</td><td class="positive">0.61</td><td>0.32</td></tr>
-                <tr><td>Perplexity</td><td class="negative">0.53</td><td class="negative">0.30</td><td class="negative">0.64</td><td>0.49</td><td class="positive">0.56</td><td class="positive">0.59</td><td class="positive">0.35</td><td>0.50</td><td class="positive">0.06</td><td class="positive">0.33</td><td class="positive">0.53</td><td>0.31</td></tr>
-                <tr><td>BERTVendi</td><td class="negative">0.64</td><td class="negative">0.26</td><td class="negative">0.56</td><td>0.49</td><td class="positive">0.33</td><td class="positive">0.79</td><td class="positive">0.23</td><td>0.45</td><td class="positive">0.42</td><td class="positive">0.20</td><td class="positive">0.44</td><td>0.35</td></tr>
-                <tr><td>SimCSEVendi</td><td class="negative">0.47</td><td class="negative">0.09</td><td class="negative">0.50</td><td>0.35</td><td class="positive">0.13</td><td class="positive">0.54</td><td class="positive">0.16</td><td>0.28</td><td class="positive">0.28</td><td class="positive">0.15</td><td class="positive">0.74</td><td>0.39</td></tr>
-                <tr class="group-row"><td colspan="13">Diversity Based</td></tr>
-                <tr><td>Task2Vec</td><td class="positive">0.06</td><td class="positive">0.39</td><td class="negative">0.03</td><td>0.14</td><td class="negative">0.26</td><td class="positive">0.20</td><td class="positive">0.29</td><td>0.08</td><td class="positive">0.12</td><td class="negative">0.12</td><td class="positive">0.91</td><td>0.30</td></tr>
-                <tr><td>MTLD</td><td class="positive">0.27</td><td class="positive">0.48</td><td class="positive">0.23</td><td>0.33</td><td class="positive">0.17</td><td class="positive">0.47</td><td class="positive">0.37</td><td>0.34</td><td class="positive">0.71</td><td class="positive">0.26</td><td class="positive">0.59</td><td class="best">0.52</td></tr>
-                <tr><td>HD-D</td><td class="positive">0.20</td><td class="positive">0.55</td><td class="positive">0.16</td><td>0.30</td><td class="positive">0.15</td><td class="positive">0.48</td><td class="positive">0.40</td><td>0.34</td><td class="positive">0.45</td><td class="positive">0.03</td><td class="positive">0.84</td><td>0.44</td></tr>
-                <tr><td>Ngram</td><td class="positive">0.12</td><td class="positive">0.54</td><td class="positive">0.18</td><td>0.28</td><td class="negative">0.02</td><td class="positive">0.50</td><td class="positive">0.42</td><td>0.30</td><td class="positive">0.54</td><td class="negative">0.01</td><td class="positive">0.66</td><td>0.40</td></tr>
-                <tr><td>Deita-Complexity</td><td class="negative">0.10</td><td class="negative">0.02</td><td class="negative">0.09</td><td>0.07</td><td class="positive">0.57</td><td class="positive">0.06</td><td class="positive">0.44</td><td>0.36</td><td class="positive">0.55</td><td class="positive">0.01</td><td class="positive">0.25</td><td>0.27</td></tr>
-              </tbody>
-            </table>
+          <div class="bar-row">
+            <div class="bar-label">Medical</div>
+            <div class="bar-track"><div class="bar-fill" style="--w:77%"></div></div>
+            <div class="bar-val">+0.77</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label">Science</div>
+            <div class="bar-track"><div class="bar-fill" style="--w:72%"></div></div>
+            <div class="bar-val">+0.72</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label">General Text</div>
+            <div class="bar-track"><div class="bar-fill" style="--w:68%"></div></div>
+            <div class="bar-val">+0.68</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label">Law</div>
+            <div class="bar-track"><div class="bar-fill bar-fill-weak" style="--w:36%"></div></div>
+            <div class="bar-val">−0.36</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label">Finance</div>
+            <div class="bar-track"><div class="bar-fill bar-fill-weak" style="--w:18%"></div></div>
+            <div class="bar-val">+0.18</div>
           </div>
         </div>
-      </details>
+        <div class="highlight-note">
+          Bar magnitude is \(|\rho|\); the displayed value is DAS's Pearson correlation with downstream performance,
+          averaged across Qwen2.5-7B, Llama-3.1-8B, and Mistral-7B-v0.3 (computed as the sign-flipped MMD correlations
+          reported in Tables E &amp; F, since DAS \(=\) \(-\)MMD). Longer bars in <em>Math, Medical, Science, General</em>
+          indicate that DAS is a strong consistent predictor; <em>Finance</em> is weak; in <em>Law</em> the direction flips.
+        </div>
+      </div>
+    </div>
+  </section>
 
-      <div class="columns is-centered" style="margin-top: 1.5rem;">
-        <div class="column is-11">
-          <div class="table-card">
-            <div class="table-header">
-              <div>
-                <h4 class="title is-5">Main Observations</h4>
-                <p>Key empirical findings from both benchmark tracks.</p>
-              </div>
-            </div>
-            <div class="columns">
-              <div class="column">
-                <div class="paper-card finding-card">
-                  <h4 class="title is-5">Evaluation must be end-to-end</h4>
-                  <p>
-                    Constructed data can improve, plateau, or degrade performance depending on the domain, base model,
-                    and alignment of the synthesized data.
-                  </p>
-                </div>
-              </div>
-              <div class="column">
-                <div class="paper-card finding-card">
-                  <h4 class="title is-5">Agentic construction is promising</h4>
-                  <p>
-                    Agents can decompose corpus-level data preparation into reading, extraction, filtering,
-                    reformulation, and verification steps.
-                  </p>
-                </div>
-              </div>
-              <div class="column">
-                <div class="paper-card finding-card">
-                  <h4 class="title is-5">No metric is universal</h4>
-                  <p>
-                    DAS strongly predicts utility in several domains, while Finance and Law reveal the limits of a
-                    universal data quality metric.
-                  </p>
-                </div>
-              </div>
-            </div>
-            <p class="small-note">
-              Green cells highlight strongest values in the corresponding table or block. Yellow cells mark notable
-              second-best or competitive values. Correlation tables preserve the paper’s sign convention for each metric.
-            </p>
+  <!-- ========= KEY FINDINGS ========= -->
+  <section id="findings" class="section section-alt">
+    <div class="container">
+      <h2 class="section-title"><span class="section-num">08</span>Key Findings</h2>
+
+      <div class="findings-grid">
+        <div class="finding-card">
+          <div class="finding-icon"><i class="fas fa-flag-checkered"></i></div>
+          <h4>Constructed data must be evaluated end-to-end</h4>
+          <p>SFT on synthesized data does <em>not</em> always improve downstream performance. Outcomes are strongly domain- and model-dependent — motivating downstream-grounded evaluation rather than surface-level quality proxies.</p>
+        </div>
+        <div class="finding-card">
+          <div class="finding-icon"><i class="fas fa-cogs"></i></div>
+          <h4>Direct LLM &amp; fixed workflows: useful but limited</h4>
+          <p>Direct LLM generation provides a simple baseline but is unstable; DataFlow-based workflows excel where corpora can be transformed via stable procedures (best Qwen Law 77.2; best Llama Finance 36.5) but are weaker on Math and Science.</p>
+        </div>
+        <div class="finding-card">
+          <div class="finding-icon"><i class="fas fa-robot"></i></div>
+          <h4>Agent-based construction shows strong potential</h4>
+          <p>Agents frequently take top spots in Math, Finance, Medicine, Law — e.g., agent <strong>GPT-5.2</strong> 25.5 (Qwen Math), agent <strong>GPT-5.3-codex</strong> 59.3 (Qwen Finance), agent <strong>Gemini 3.0 Pro</strong> 43.8 (Qwen Medicine).</p>
+        </div>
+        <div class="finding-card">
+          <div class="finding-icon"><i class="fas fa-tools"></i></div>
+          <h4>Skill-based construction is a strong baseline</h4>
+          <p>Data-Construction-Skill ties for best on Qwen General (78.2) and best on Minerva-Math (14.0); on Llama-3.1-8B Finance it lifts no-synthetic from 15.1 to <strong>34.2</strong>. Not yet uniformly dominant — leaving headroom for future skills.</p>
+        </div>
+        <div class="finding-card">
+          <div class="finding-icon"><i class="fas fa-chart-line"></i></div>
+          <h4>DAS strongly predicts downstream utility</h4>
+          <p>DAS exhibits consistent, statistically significant correlations with empirical performance: Math <strong>+0.86</strong> Avg (Mistral +0.94, Llama +0.93), Medical <strong>+0.77</strong>, Science <strong>+0.72</strong>, General Text <strong>+0.68</strong>.</p>
+        </div>
+        <div class="finding-card">
+          <div class="finding-icon"><i class="fas fa-balance-scale"></i></div>
+          <h4>Cross-domain generalization remains open</h4>
+          <p>No single quality metric is uniformly reliable across all domains. DAS attenuates in Finance (+0.18) and flips direction in Law (−0.36); Superfiltering wins Finance (+0.67) and MTLD wins Law (+0.52) — among the diversity- and quality-based baselines.</p>
+        </div>
+        <div class="finding-card">
+          <div class="finding-icon"><i class="fas fa-bolt"></i></div>
+          <h4>DAS is practical at scale</h4>
+          <p>DAS averages <strong>306 s</strong> per dataset — substantially faster than Vendi Score (459 s) and Deita-Quality (435 s) — while delivering markedly stronger predictive correlation. A favorable accuracy/efficiency trade-off.</p>
+        </div>
+        <div class="finding-card">
+          <div class="finding-icon"><i class="fas fa-vials"></i></div>
+          <h4>Model-architecture coverage matters</h4>
+          <p>Qwen2.5-7B, Llama-3.1-8B, and Mistral-7B-v0.3 give distinct downstream signals. Track 2 spans all three to test whether observed correlations are model-dependent — DAS remains consistent across architectures in reasoning-intensive domains.</p>
+        </div>
+        <div class="finding-card">
+          <div class="finding-icon"><i class="fas fa-handshake"></i></div>
+          <h4>A common testbed for the community</h4>
+          <p>By fixing source corpora, base models, training recipes, and downstream benchmarks, DataPrep-Bench enables head-to-head comparison of agents, workflows, and metrics — turning data preparation into a measurable, reproducible research target.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========= RESOURCES ========= -->
+  <section id="resources" class="section">
+    <div class="container">
+      <h2 class="section-title"><span class="section-num">09</span>Released Resources</h2>
+      <p class="lead">DataPrep-Bench is released as a <strong>reproducible, downstream-grounded testbed</strong>. Each resource below targets one component of the protocol so any new agent, workflow, or metric can be plugged in under identical conditions.</p>
+
+      <div class="resource-grid">
+        <a class="resource-card" href="https://github.com/haolpku/Data-Preparation-Bench" target="_blank" rel="noopener">
+          <div class="resource-icon"><i class="fab fa-github"></i></div>
+          <div class="resource-title">Source Code</div>
+          <div class="resource-desc">Benchmark pipelines, data construction baselines (incl. Data-Construction-Skill), data quality evaluators (incl. DAS), and the unified evaluation harness.</div>
+          <div class="resource-link">github.com/haolpku/Data-Preparation-Bench →</div>
+        </a>
+        <a class="resource-card" href="https://huggingface.co/datasets/lhpku20010120/Data-Prep-Bench" target="_blank" rel="noopener">
+          <div class="resource-icon"><i class="fas fa-database"></i></div>
+          <div class="resource-title">Datasets &amp; Benchmarks</div>
+          <div class="resource-desc">Raw source corpora (domain books in Markdown), candidate dataset pools (in-domain & out-of-domain), domain proxies, and downstream-fine-tuned performance records as ground truth.</div>
+          <div class="resource-link">huggingface.co/lhpku20010120/Data-Prep-Bench →</div>
+        </a>
+        <a class="resource-card" href="https://datapreparationbench.github.io/" target="_blank" rel="noopener">
+          <div class="resource-icon"><i class="fas fa-globe"></i></div>
+          <div class="resource-title">Project Website</div>
+          <div class="resource-desc">Latest leaderboards, news, and community submissions across both tracks.</div>
+          <div class="resource-link">datapreparationbench.github.io →</div>
+        </a>
+      </div>
+
+      <div class="resource-list">
+        <h3 class="subsection-title">What you can plug in</h3>
+        <div class="plugin-grid">
+          <div class="plugin-card plugin-1">
+            <div class="plugin-tag">Track 1</div>
+            <div class="plugin-title">Bring your own Construction method</div>
+            <div class="plugin-desc">Your method takes our Markdown source corpus \(\mathcal{B}_k\) per domain and outputs an SFT dataset. We fine-tune the same base models with the same protocol and report downstream scores.</div>
+          </div>
+          <div class="plugin-card plugin-2">
+            <div class="plugin-tag">Track 2</div>
+            <div class="plugin-title">Bring your own Quality metric</div>
+            <div class="plugin-desc">Your metric \(Q\) consumes a candidate dataset and returns a scalar. We report Pearson \(\rho\) between \(\{Q(\mathcal{X}_{k,i})\}\) and the released \(\{s_{k,i}\}\) ground-truth downstream scores.</div>
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  <section class="section" id="bibtex">
-    <div class="container is-max-desktop content">
-      <h2 class="title section-title">BibTeX</h2>
-      <pre class="bibtex"><code>@misc{liang2026dataprepbench,
-  title        = {DataPrep-Bench: Benchmarking LLMs as Training Data Preparators},
-  author       = {Hao Liang and Qifeng Cai and Yibo Lin and Jianzhuo Du and Qifeng Xia and Sizhe Qiu and Linzhuang Sun and Meiyi Qiang and Zhaoyang Han and Xiaochen Ma and Bohan Zeng and Ruichuan An and Conghui He and Weinan E and Wentao Zhang},
-  year         = {2026},
-  url          = {https://datapreparationbench.github.io/}
-}</code></pre>
+  <!-- ========= BIBTEX ========= -->
+  <section id="bibtex" class="section section-alt">
+    <div class="container narrow">
+      <h2 class="section-title"><span class="section-num">10</span>Citation</h2>
+      <p class="lead">If you find DataPrep-Bench useful for your research, please consider citing our work:</p>
+
+      <div class="bibtex-wrap">
+        <button class="bibtex-copy" onclick="copyBibtex()" aria-label="Copy BibTeX"><i class="fas fa-copy"></i> <span id="copy-label">Copy</span></button>
+<pre class="bibtex" id="bibtex-block">@article{liang2026dataprepbench,
+  title   = {DataPrep-Bench: Benchmarking LLMs as Training Data Preparators},
+  author  = {Liang, Hao and Cai, Qifeng and Lin, Yibo and Du, Jianzhuo and Xia, Qifeng
+             and Qiu, Sizhe and Sun, Linzhuang and Qiang, Meiyi and Han, Zhaoyang
+             and Ma, Xiaochen and Zeng, Bohan and An, Ruichuan and He, Conghui
+             and E, Weinan and Zhang, Wentao},
+  journal = {arXiv preprint},
+  year    = {2026},
+  url     = {https://github.com/haolpku/Data-Preparation-Bench}
+}</pre>
+      </div>
     </div>
   </section>
 
+  <!-- ========= FOOTER ========= -->
   <footer class="footer">
     <div class="container">
-      <div class="content has-text-centered">
-        <p>
-          Website for DataPrep-Bench. Replace placeholder paper links, author links, and the framework figure before release.
-        </p>
+      <div class="footer-row">
+        <div class="footer-left">
+          <div class="footer-brand">DataPrep-Bench</div>
+          <div class="footer-tag">Benchmarking LLMs as Training Data Preparators</div>
+        </div>
+        <div class="footer-links">
+          <a href="https://github.com/haolpku/Data-Preparation-Bench" target="_blank" rel="noopener" aria-label="GitHub"><i class="fab fa-github"></i></a>
+          <a href="https://huggingface.co/datasets/lhpku20010120/Data-Prep-Bench" target="_blank" rel="noopener" aria-label="Dataset"><i class="fas fa-database"></i></a>
+          <a href="https://datapreparationbench.github.io/" target="_blank" rel="noopener" aria-label="Project website"><i class="fas fa-globe"></i></a>
+          <a href="mailto:wentao.zhang@pku.edu.cn" aria-label="Contact"><i class="fas fa-envelope"></i></a>
+        </div>
+      </div>
+      <div class="footer-fine">
+        © 2026 DataPrep-Bench. Project page designed for clear, reproducible academic communication.
       </div>
     </div>
   </footer>
 
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const burgers = Array.prototype.slice.call(document.querySelectorAll(".navbar-burger"), 0);
-      burgers.forEach((burger) => {
-        burger.addEventListener("click", () => {
-          const target = burger.dataset.target;
-          const menu = document.getElementById(target);
-          burger.classList.toggle("is-active");
-          menu.classList.toggle("is-active");
-        });
-      });
-    });
-  </script>
+  <!-- KaTeX -->
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+          onload="renderMathInElement(document.body, {
+            delimiters: [
+              {left: '\\[', right: '\\]', display: true},
+              {left: '\\(', right: '\\)', display: false},
+              {left: '$$', right: '$$', display: true}
+            ],
+            throwOnError: false
+          });"></script>
+  <script src="script.js"></script>
 </body>
-
 </html>
