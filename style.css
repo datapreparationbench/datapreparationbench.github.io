@@ -1,5 +1,5 @@
 /* =====================================================
-   DataPrep-Bench — Academic Project Page
+   DataPrep-Bench 鈥� Academic Project Page
    Professional, modern, scholarly design system
    ===================================================== */
 
@@ -234,11 +234,11 @@ a:hover { color: var(--color-accent); }
   white-space: nowrap;
 }
 .author:not(:last-child)::after {
-  content: "\00a0·";
+  content: "\00a0路";
   color: var(--color-text-faint);
   font-weight: 300;
   /* the trailing space below is breakable, so a wrap can happen between
-     the dot and the next author — never between the author and its dot */
+     the dot and the next author 鈥� never between the author and its dot */
   margin-right: 8px;
 }
 .author-mark {
@@ -443,7 +443,7 @@ a:hover { color: var(--color-accent); }
   font-size: 12.5px;
   color: var(--color-text-muted);
   line-height: 1.45;
-  /* prevent ugly mid-word breaks like "Mistral-/7B" — keep model names whole */
+  /* prevent ugly mid-word breaks like "Mistral-/7B" 鈥� keep model names whole */
   word-break: keep-all;
   hyphens: none;
   overflow-wrap: normal;
@@ -2002,7 +2002,7 @@ a:hover { color: var(--color-accent); }
   color: var(--color-text);
 }
 .legend-swatch.sw-sig::before {
-  content: "ρ";
+  content: "蟻";
   text-decoration: underline;
   text-decoration-thickness: 2px;
   text-underline-offset: 2px;
@@ -2110,7 +2110,7 @@ a:hover { color: var(--color-accent); }
   color: var(--color-text);
 }
 
-/* No-wrap utility — keeps things like model names ("Llama-3.1-8B") whole */
+/* No-wrap utility 鈥� keeps things like model names ("Llama-3.1-8B") whole */
 .nobr { white-space: nowrap; }
 
 /* ============================================
@@ -2163,7 +2163,7 @@ a:hover { color: var(--color-accent); }
 }
 
 /* ============================================
-   Reduced motion — respect user preferences
+   Reduced motion 鈥� respect user preferences
    ============================================ */
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
@@ -2180,7 +2180,7 @@ a:hover { color: var(--color-accent); }
 }
 
 /* ============================================
-   Print styles — clean academic export
+   Print styles 鈥� clean academic export
    ============================================ */
 @media print {
   :root {
