@@ -1,5 +1,5 @@
 /* =====================================================
-   DataPrep-Bench 鈥� Academic Project Page
+   DataPrep-Bench — Academic Project Page
    Professional, modern, scholarly design system
    ===================================================== */
 
@@ -226,7 +226,7 @@ a:hover { color: var(--color-accent); }
 }
 /* Authors are inline; each one stays glued to its mark; the separator
    is a trailing ::after on every author except the last so when a line wraps
-   the dot stays at the END of the previous line rather than starting the next. */
+   the comma stays at the END of the previous line rather than starting the next. */
 .author {
   display: inline;
   color: var(--color-text);
@@ -234,12 +234,12 @@ a:hover { color: var(--color-accent); }
   white-space: nowrap;
 }
 .author:not(:last-child)::after {
-  content: "\00a0路";
+  /* Comma avoids rare cases where U+00B7 (·) misrenders in ::after under CJK font fallback */
+  content: ", ";
   color: var(--color-text-faint);
-  font-weight: 300;
-  /* the trailing space below is breakable, so a wrap can happen between
-     the dot and the next author 鈥� never between the author and its dot */
-  margin-right: 8px;
+  font-family: var(--font-sans);
+  font-weight: inherit;
+  margin-right: 4px;
 }
 .author-mark {
   color: var(--color-accent);
@@ -443,7 +443,7 @@ a:hover { color: var(--color-accent); }
   font-size: 12.5px;
   color: var(--color-text-muted);
   line-height: 1.45;
-  /* prevent ugly mid-word breaks like "Mistral-/7B" 鈥� keep model names whole */
+  /* prevent ugly mid-word breaks like "Mistral-/7B" — keep model names whole */
   word-break: keep-all;
   hyphens: none;
   overflow-wrap: normal;
@@ -2002,7 +2002,7 @@ a:hover { color: var(--color-accent); }
   color: var(--color-text);
 }
 .legend-swatch.sw-sig::before {
-  content: "蟻";
+  content: "ρ";
   text-decoration: underline;
   text-decoration-thickness: 2px;
   text-underline-offset: 2px;
@@ -2110,7 +2110,7 @@ a:hover { color: var(--color-accent); }
   color: var(--color-text);
 }
 
-/* No-wrap utility 鈥� keeps things like model names ("Llama-3.1-8B") whole */
+/* No-wrap utility — keeps things like model names ("Llama-3.1-8B") whole */
 .nobr { white-space: nowrap; }
 
 /* ============================================
@@ -2163,7 +2163,7 @@ a:hover { color: var(--color-accent); }
 }
 
 /* ============================================
-   Reduced motion 鈥� respect user preferences
+   Reduced motion — respect user preferences
    ============================================ */
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
@@ -2180,7 +2180,7 @@ a:hover { color: var(--color-accent); }
 }
 
 /* ============================================
-   Print styles 鈥� clean academic export
+   Print styles — clean academic export
    ============================================ */
 @media print {
   :root {
