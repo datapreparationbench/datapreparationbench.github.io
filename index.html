@@ -26,8 +26,7 @@
   <!-- Canonical URL -->
   <link rel="canonical" href="https://datapreparationbench.github.io/" />
 
-  <!-- Favicon (inline SVG: amber 'D' on navy disc, no extra HTTP request) -->
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><circle cx='32' cy='32' r='30' fill='%231e3a8a'/><text x='32' y='44' font-family='Georgia,serif' font-size='38' font-weight='700' fill='%23fbbf24' text-anchor='middle'>D</text></svg>" />
+  <link rel="icon" type="image/png" href="assets/dcai_logo.png" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -48,7 +47,10 @@
   <!-- ========= NAV ========= -->
   <nav class="nav" aria-label="Section navigation">
     <div class="nav-inner">
-      <a href="#top" class="nav-brand">DataPrep-Bench</a>
+      <a href="#top" class="nav-brand">
+        <img class="nav-logo" src="assets/dcai_logo.png" alt="" aria-hidden="true" />
+        <span>DataPrep-Bench</span>
+      </a>
       <ul class="nav-links">
         <li><a href="#abstract">Abstract</a></li>
         <li><a href="#overview">Overview</a></li>
@@ -58,7 +60,7 @@
         <li><a href="#track1-results">Track 1</a></li>
         <li><a href="#track2-results">Track 2</a></li>
         <li><a href="#findings">Findings</a></li>
-        <li><a href="#bibtex">BibTeX</a></li>
+        <!-- <li><a href="#bibtex">BibTeX</a></li> -->
       </ul>
     </div>
   </nav>
@@ -107,55 +109,27 @@
         <a class="cta cta-dark" href="https://huggingface.co/datasets/lhpku20010120/Data-Prep-Bench" target="_blank" rel="noopener">
           <i class="fas fa-database"></i><span>Dataset</span>
         </a>
-        <a class="cta cta-dark" href="https://datapreparationbench.github.io/" target="_blank" rel="noopener">
-          <i class="fas fa-globe"></i><span>Website</span>
-        </a>
-        <a class="cta cta-dark" href="#bibtex">
-          <i class="fas fa-quote-left"></i><span>BibTeX</span>
+        <a class="cta cta-dark" href="https://clawhub.ai/technomad-ds/data-construction-skill" target="_blank" rel="noopener" aria-label="Data Construction Skill on ClawHub">
+          <i class="fas fa-shrimp"></i><span>Skill</span>
         </a>
       </div>
 
       <!-- TL;DR -->
       <div class="tldr">
-        <div class="tldr-tag">TL;DR</div>
+        <div class="tldr-tag"></div>
         <p>
           <strong>DataPrep-Bench</strong> is the first unified, <strong>downstream-grounded</strong> benchmark that jointly evaluates how well LLMs, agents,
-          and data workflows can prepare training data end to end. It covers two complementary tracks — <strong>Data Construction</strong>
-          (transforming raw sources into SFT data) and <strong>Data Quality Evaluation</strong> (predicting downstream utility of candidate datasets) —
-          and ships two strong baselines: <strong>Data-Construction-Skill</strong> (skill-driven agentic construction) and the
-          <strong>Distributional Alignment Score (DAS)</strong> (training-free, MMD-based quality estimator).
+          and data workflows can prepare training data end to end. It covers two complementary tracks: <strong>Data Construction</strong>,
+          which transforms raw sources into SFT data, and <strong>Data Quality Evaluation</strong>, which predicts the downstream utility of
+          candidate datasets. It also ships two strong baselines: <strong>Data-Construction-Skill</strong> for skill-driven agentic construction
+          and the <strong>Distributional Alignment Score (DAS)</strong>, a training-free, MMD-based quality estimator.
         </p>
       </div>
     </div>
   </header>
 
-  <!-- ========= TEASER / KEY STATS ========= -->
-  <section class="teaser">
-    <div class="container">
-      <div class="stat-grid">
-        <div class="stat-card">
-          <div class="stat-num">2</div>
-          <div class="stat-label">Evaluation Tracks</div>
-          <div class="stat-sub"><span class="nobr">Construction</span> · <span class="nobr">Quality Evaluation</span></div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-num">6</div>
-          <div class="stat-label">Domains</div>
-          <div class="stat-sub"><span class="nobr">Math</span> · <span class="nobr">Science</span> · <span class="nobr">Medical</span> · <span class="nobr">Finance</span> · <span class="nobr">Law</span> · <span class="nobr">General</span></div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-num">3</div>
-          <div class="stat-label">Base Models</div>
-          <div class="stat-sub"><span class="nobr">Qwen2.5-7B</span> · <span class="nobr">Llama-3.1-8B</span> · <span class="nobr">Mistral-7B</span></div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-num">18</div>
-          <div class="stat-label">Quality Metrics</div>
-          <div class="stat-sub"><span class="nobr">Distribution</span> · <span class="nobr">Quality</span> · <span class="nobr">Diversity</span></div>
-        </div>
-      </div>
-    </div>
-  </section>
+  <!-- ========= HEADER / ABSTRACT DIVIDER ========= -->
+  <div class="teaser-divider" aria-hidden="true"></div>
 
   <!-- ========= ABSTRACT ========= -->
   <section id="abstract" class="section">
@@ -189,38 +163,43 @@
   <section id="overview" class="section section-alt">
     <div class="container">
       <h2 class="section-title"><span class="section-num">02</span>Framework Overview</h2>
-      <p class="lead">
-        DataPrep-Bench formalizes data preparation under a <strong>unified, downstream-grounded</strong> framework. Both tracks share
-        the same evaluation principle: a data preparation decision is useful only if it leads to <em>better downstream model performance</em>.
-        Concretely, the common reference signal is \( \mathrm{Perf}\bigl(f(\mathcal{X}), \mathcal{T}_k\bigr) \) — the benchmark score
-        of a base model fine-tuned on dataset \(\mathcal{X}\) for domain \(D_k\).
+      <p class="lead lead-wide">
+        DataPrep-Bench evaluates <strong>LLM-driven data preparation</strong>: the use of LLMs, agents, and data workflows to produce or assess training data. It covers two capabilities: <strong>Data Construction</strong>, which turns raw domain sources into
+        supervised training data, and <strong>Data Quality Evaluation</strong>, which predicts which candidate datasets are likely to
+        improve downstream models before training. Both tracks are tested under shared domains, base models, training protocols, and
+        downstream benchmarks, so methods are compared by their actual downstream impact.
       </p>
+
+      <!-- Domains -->
+      <div class="domain-overview-card" aria-label="Covered domains">
+        <div class="domain-overview-title">Domains</div>
+        <div class="domain-grid">
+          <div class="domain-pill"><i class="fas fa-square-root-variable"></i> Math</div>
+          <div class="domain-pill"><i class="fas fa-atom"></i> Science</div>
+          <div class="domain-pill"><i class="fas fa-stethoscope"></i> Medical</div>
+          <div class="domain-pill"><i class="fas fa-money-bill-trend-up"></i> Finance</div>
+          <div class="domain-pill"><i class="fas fa-scale-balanced"></i> Law</div>
+          <div class="domain-pill"><i class="fas fa-book-open"></i> General Text</div>
+        </div>
+      </div>
 
       <!-- Paper framework figure -->
       <figure class="paper-figure">
-        <img src="assets/Frame.png" alt="Overall framework of DataPrep-Bench" loading="lazy" />
-        <figcaption>Figure 1. The overall framework of DataPrep-Bench. Two complementary tracks share a downstream-grounded evaluation protocol: model utility on held-out benchmarks is the common reference signal.</figcaption>
+        <img src="assets/main.png" alt="Overall framework of DataPrep-Bench" loading="lazy" />
+        <figcaption>The overall framework of DataPrep-Bench. </figcaption>
       </figure>
 
-      <!-- Domains -->
-      <div class="domain-grid">
-        <div class="domain-pill"><i class="fas fa-square-root-variable"></i> Math</div>
-        <div class="domain-pill"><i class="fas fa-atom"></i> Science</div>
-        <div class="domain-pill"><i class="fas fa-stethoscope"></i> Medical</div>
-        <div class="domain-pill"><i class="fas fa-money-bill-trend-up"></i> Finance</div>
-        <div class="domain-pill"><i class="fas fa-scale-balanced"></i> Law</div>
-        <div class="domain-pill"><i class="fas fa-book-open"></i> General Text</div>
-      </div>
+
 
       <!-- Related work / positioning -->
       <div class="related-work">
-        <h3 class="subsection-title">How DataPrep-Bench differs from prior data benchmarks</h3>
+        <h3 class="subsection-title">How DataPrep-Bench differs from prior benchmarks and data tooling</h3>
         <div class="rel-table-wrap">
           <table class="rel-table">
             <thead>
               <tr>
-                <th>Benchmark</th>
-                <th>Target</th>
+                <th>Prior Work</th>
+                <th>Focus</th>
                 <th>LLM-as-Preparator</th>
                 <th>Construction</th>
                 <th>Quality Eval.</th>
@@ -262,8 +241,8 @@
               </tr>
               <tr>
                 <td>Data-Juicer / DataFlow</td>
-                <td>Modular tooling</td>
-                <td><span class="cell-no">Tooling, no benchmark</span></td>
+                <td>Data processing tooling</td>
+                <td><span class="cell-no">No comparative benchmark</span></td>
                 <td><span class="cell-no">—</span></td>
                 <td><span class="cell-no">—</span></td>
                 <td><span class="cell-no">—</span></td>
@@ -280,9 +259,9 @@
           </table>
         </div>
         <p class="caption rel-caption">
-          Existing data benchmarks emphasize curation/selection of pre-existing corpora. DataPrep-Bench is the first to evaluate
-          LLMs/agents <em>as data preparators</em> — covering both <em>construction</em> from raw sources and <em>quality evaluation</em>
-          of candidate datasets, all grounded in end-to-end downstream performance.
+          Existing benchmarks mainly evaluate curation or selection over pre-existing corpora, while data processing systems provide
+          modular tooling without benchmarking the comparative effectiveness of different preparators. DataPrep-Bench directly evaluates
+          LLMs and agents <em>as data preparators</em> across construction and quality evaluation, grounded in end-to-end downstream performance.
         </p>
       </div>
     </div>
@@ -293,54 +272,65 @@
     <div class="container">
       <h2 class="section-title"><span class="section-num">03</span>Two Evaluation Tracks</h2>
 
-      <div class="track-grid">
+      <p class="tracks-intro">
+        Both tracks ask the same practical question: does a data preparation decision lead to a better downstream model? They differ in where the decision happens.
+        One track evaluates methods that <strong>create</strong> training data from raw sources; the other evaluates metrics that <strong>score</strong> existing candidate datasets before training.
+      </p>
+
+      <div class="track-flow">
         <!-- Track 1 -->
-        <div class="track-card track-card-1">
-          <div class="track-header">
+        <article class="track-row track-row-1">
+          <div class="track-row-header">
             <div class="track-num">Track&nbsp;1</div>
             <h3>Data Construction</h3>
+            <p>Can a method turn raw domain materials into useful supervised fine-tuning data?</p>
           </div>
-          <p class="track-lead">
-            Can LLMs, agents, and workflows transform <strong>raw domain sources</strong> (books, manuals, long-form materials) into useful supervised fine-tuning data?
-          </p>
-
-          <div class="track-eq">
-            \[
-            \mathrm{Score}_{\mathrm{con}}(M, D_k) \;=\; \mathrm{Perf}\!\left( f\!\left(\mathcal{X}_k^{(M)}\right),\; \mathcal{T}_k \right)
-            \]
+          <div class="track-step-grid">
+            <div class="track-step">
+              <div class="track-step-label">Input</div>
+              <p>Domain books, manuals, and long-form knowledge sources converted into a shared Markdown format.</p>
+            </div>
+            <div class="track-step">
+              <div class="track-step-label">Method Output</div>
+              <p>A supervised question-answer dataset synthesized from those raw sources.</p>
+            </div>
+            <div class="track-step">
+              <div class="track-step-label">Judgment</div>
+              <p>Fine-tune the same base model with the constructed data plus Dolly-15k, then evaluate on held-out domain benchmarks.</p>
+            </div>
+            <div class="track-step">
+              <div class="track-step-label">Released Baseline</div>
+              <p><strong>Data-Construction-Skill</strong>, a skill-guided agent with reusable schemas, filtering rules, coverage checks, and validation utilities.</p>
+            </div>
           </div>
-
-          <ul class="track-points">
-            <li><strong>Input.</strong> Curated source corpus \( \mathcal{B}_k = \{b_{k,1}, \dots, b_{k,B_k}\} \) — domain books and long-form knowledge in unified Markdown.</li>
-            <li><strong>Output.</strong> Synthesized SFT dataset \( \mathcal{X}_k^{(M)} = M(\mathcal{B}_k) = \{(q_i, a_i)\} \).</li>
-            <li><strong>Evaluation.</strong> Fine-tune base model on \( \mathcal{X}_k^{(M)} \), measure performance on held-out benchmarks \(\mathcal{T}_k\).</li>
-            <li><strong>Strong baseline:</strong> Data-Construction-Skill — skill-guided agentic construction.</li>
-          </ul>
-        </div>
+        </article>
 
         <!-- Track 2 -->
-        <div class="track-card track-card-2">
-          <div class="track-header">
+        <article class="track-row track-row-2">
+          <div class="track-row-header">
             <div class="track-num">Track&nbsp;2</div>
             <h3>Data Quality Evaluation</h3>
+            <p>Can a metric predict which candidate datasets will improve downstream performance before fine-tuning?</p>
           </div>
-          <p class="track-lead">
-            Can a scoring function \(Q\) <strong>predict downstream utility</strong> of candidate training datasets <em>before</em> fine-tuning?
-          </p>
-
-          <div class="track-eq">
-            \[
-            \rho(Q, D_k) = \mathrm{Pearson}\!\left( \mathbf{q}_k,\; \mathbf{s}_k \right),\;\; \mathbf{s}_k = \{\mathrm{Perf}(f(\mathcal{X}_{k,i}), \mathcal{T}_k)\}
-            \]
+          <div class="track-step-grid">
+            <div class="track-step">
+              <div class="track-step-label">Input</div>
+              <p>Public SFT candidate pools for each domain, mixing in-domain and out-of-domain datasets, with optional domain proxies.</p>
+            </div>
+            <div class="track-step">
+              <div class="track-step-label">Metric Output</div>
+              <p>One utility score for each candidate dataset, computed before any downstream training is run.</p>
+            </div>
+            <div class="track-step">
+              <div class="track-step-label">Judgment</div>
+              <p>Compare the metric scores against released ground-truth performance records from models fine-tuned on the same candidates.</p>
+            </div>
+            <div class="track-step">
+              <div class="track-step-label">Released Baseline</div>
+              <p><strong>Distributional Alignment Score (DAS)</strong>, a training-free metric that measures how closely a candidate matches a domain proxy.</p>
+            </div>
           </div>
-
-          <ul class="track-points">
-            <li><strong>Input.</strong> Candidate dataset pool \( \mathbb{X}_k = \{\mathcal{X}_{k,1}, \dots, \mathcal{X}_{k,C_k}\} \) (in-domain & out-of-domain), plus optional domain proxy.</li>
-            <li><strong>Output.</strong> Per-dataset scalar score \( q_{k,i} = Q(\mathcal{X}_{k,i}) \).</li>
-            <li><strong>Evaluation.</strong> Pearson \( \rho \) between \(\mathbf{q}_k\) and empirical fine-tuned performance \(\mathbf{s}_k\), with significance \(p &lt; 0.05\).</li>
-            <li><strong>Strong baseline:</strong> Distributional Alignment Score (DAS) — MMD-based, training-free.</li>
-          </ul>
-        </div>
+        </article>
       </div>
     </div>
   </section>
@@ -351,81 +341,124 @@
       <h2 class="section-title"><span class="section-num">04</span>Strong Baselines</h2>
 
       <!-- Method 1: Data-Construction-Skill -->
-      <div class="method-card">
+      <div class="method-card method-card-1">
         <div class="method-tag method-tag-1">For Track 1 · Data Construction</div>
         <h3 class="method-title">Data-Construction-Skill</h3>
-        <p class="method-sub">A skill-guided agentic framework that turns long-form domain books into reusable SFT supervision.
-        The novelty is treating <strong>skills</strong> — explicit specifications of sample types, output schemas, filtering rules and validation —
-        as a reusable control layer that sits <em>between</em> high-level construction goals and low-level agent execution.</p>
+        <p class="method-sub">
+          A skill-guided agentic method for turning long-form domain documents into reusable QA-style SFT data.
+          It is designed for corpus-scale construction, where a single prompt is not enough to manage decomposition,
+          consistency, coverage, validation, and resumable execution.
+        </p>
 
-        <div class="method-grid">
-          <div class="method-step">
-            <div class="step-num">1</div>
-            <div class="step-title">Structure-Aware Chunking</div>
-            <div class="step-desc">Partition the corpus \( \mathcal{B}_k \) into semantically coherent chunks \( \mathcal{C}_k = \mathrm{Chunk}(\mathcal{B}_k) \), preserving local completeness while keeping inputs manageable.</div>
+        <div class="method-explain-grid">
+          <div class="method-explain-main">
+            <h4>Core idea</h4>
+            <p>
+              The agent still plans over the corpus and executes the construction work, but the reusable <strong>skill layer</strong>
+              defines what counts as valid supervision. The skill packages task instructions, output schemas, sample-type definitions,
+              filtering rules, coverage requirements, and validation utilities into a structured interface for the agent.
+            </p>
+            <p>
+              This makes the method more than a one-off QA-generation prompt: it is a controllable framework for extracting,
+              reformulating, checking, and tracking supervision across hundreds of pages of expert-authored content.
+            </p>
           </div>
-          <div class="method-step">
-            <div class="step-num">2</div>
-            <div class="step-title">Skill-Regulated Agent</div>
-            <div class="step-desc">A reusable skill specifies sample types, output schema, filtering criteria, coverage requirements, and validation behaviors. The agent plans over the corpus and invokes utilities under skill-level constraints.</div>
+          <div class="method-explain-side">
+            <div class="method-side-title">What the skill controls</div>
+            <ul class="method-checklist">
+              <li>Which chunks contain reusable domain knowledge</li>
+              <li>Which sample types are valid for each chunk</li>
+              <li>Whether questions are faithful and self-contained</li>
+              <li>Which malformed, duplicated, or hallucinated samples are rejected</li>
+              <li>How coverage and resumability are recorded</li>
+            </ul>
           </div>
-          <div class="method-step">
-            <div class="step-num">3</div>
-            <div class="step-title">Three-Form QA Generation</div>
-            <div class="step-desc">For each retained chunk \(c\): \( \mathcal{G}(c) = \mathcal{G}^{\mathrm{concept}}(c) \cup \mathcal{G}^{\mathrm{reason}}(c) \cup \mathcal{G}^{\mathrm{case}}(c) \) — concept, reasoning and case-based QA.</div>
-          </div>
-          <div class="method-step">
-            <div class="step-num">4</div>
-            <div class="step-title">Post-Processing &amp; Validation</div>
-            <div class="step-desc">Strip document-relative phrasing, filter malformed/duplicated/weakly-grounded samples, maintain chunk-level processing records for coverage and resumability.</div>
+        </div>
+
+        <div class="method-pipeline">
+          <div class="method-pipeline-title">Construction pipeline</div>
+          <div class="method-grid">
+            <div class="method-step">
+              <div class="step-num">1</div>
+              <div class="step-title">Chunk long documents</div>
+              <div class="step-desc">Split books and manuals into semantically coherent chunks that are small enough for agent processing but still locally complete.</div>
+            </div>
+            <div class="method-step">
+              <div class="step-num">2</div>
+              <div class="step-title">Triage reusable knowledge</div>
+              <div class="step-desc">Keep chunks that teach definitions, rules, mechanisms, conditions, exceptions, comparisons, or causal links; skip noisy or navigational content.</div>
+            </div>
+            <div class="method-step">
+              <div class="step-num">3</div>
+              <div class="step-title">Generate three QA forms</div>
+              <div class="step-desc">Create concept QA, source-grounded reasoning QA, and simple case-application QA when the chunk supports them.</div>
+            </div>
+            <div class="method-step">
+              <div class="step-num">4</div>
+              <div class="step-title">Validate and track coverage</div>
+              <div class="step-desc">Remove document-relative phrasing and weak samples, then maintain chunk-level records for coverage checking and resumable runs.</div>
+            </div>
           </div>
         </div>
 
         <div class="method-callout">
           <i class="fas fa-lightbulb"></i>
-          <span>The skill instructs the agent to produce QA pairs that are <strong>faithful</strong> to the source, <strong>self-contained</strong>
-          (no document-relative phrasing), <strong>diverse</strong> in question type and difficulty, and useful as SFT examples — while
-          explicitly listing invalid patterns (passage-dependent prompts, hallucinated answers, duplicates).</span>
+          <span><strong>Why it matters:</strong> Data-Construction-Skill preserves the flexibility of agentic planning while using explicit skill-level constraints to stabilize quality, coverage, and faithfulness across long-form corpora.</span>
         </div>
       </div>
 
       <!-- Method 2: DAS -->
-      <div class="method-card">
+      <div class="method-card method-card-2">
         <div class="method-tag method-tag-2">For Track 2 · Data Quality Evaluation</div>
         <h3 class="method-title">Distributional Alignment Score (DAS)</h3>
-        <p class="method-sub">A training-free, distribution-level data quality metric grounded in domain-adaptation theory.
-        DAS instantiates \(Q\) as the (negative) MMD between a candidate dataset and a domain proxy.</p>
+        <p class="method-sub">
+          A training-free metric for estimating whether a candidate SFT dataset is likely to help a target domain.
+          DAS scores a candidate by measuring how closely its text distribution aligns with a domain proxy dataset.
+        </p>
 
-        <div class="das-formula">
-          <div class="das-formula-title">Score Definition</div>
-          \[
-          \mathrm{DAS}(\mathcal{X}_{k,i}) \;=\; -\, d_{\mathrm{MMD}}\!\left( \Phi(\mathcal{X}_{k,i}),\; \Phi(\mathcal{X}^{\mathrm{proxy}}_k);\; \kappa \right)
-          \]
+        <div class="method-explain-grid">
+          <div class="method-explain-main">
+            <h4>Core idea</h4>
+            <p>
+              If a candidate dataset is distributionally close to a high-quality proxy for the target domain, it is more likely
+              to provide useful training signal for that domain. DAS turns this intuition into a plug-in score by embedding both
+              the candidate and the proxy with the same fixed text encoder, then measuring their distributional distance with MMD.
+            </p>
+            <p>
+              We use a proxy rather than the benchmark test set itself, so the metric can estimate target-domain proximity without
+              leaking test data into dataset selection. Higher DAS means smaller proxy distance and stronger predicted downstream utility.
+            </p>
+          </div>
+          <div class="method-explain-side">
+            <div class="method-side-title">What DAS is testing</div>
+            <ul class="method-checklist">
+              <li>Can a metric rank datasets before fine-tuning?</li>
+              <li>Does domain alignment predict downstream utility?</li>
+              <li>Can we avoid benchmark contamination by using proxies?</li>
+              <li>Do metric scores correlate with released ground-truth performance records?</li>
+            </ul>
+          </div>
         </div>
 
-        <div class="method-grid">
-          <div class="method-step">
-            <div class="step-num">1</div>
-            <div class="step-title">Encode</div>
-            <div class="step-desc">Map each text sample with a fixed encoder \(\phi\) (Qwen3-Embedding-8B, 4096-dim). Both candidate and domain proxy are encoded identically for comparability.</div>
+        <div class="method-pipeline">
+          <div class="method-pipeline-title">Scoring pipeline</div>
+          <div class="method-grid method-grid-3">
+            <div class="method-step">
+              <div class="step-num">1</div>
+              <div class="step-title">Encode</div>
+              <div class="step-desc">Represent samples from the candidate dataset and the domain proxy with the same fixed text encoder for comparability.</div>
+            </div>
+            <div class="method-step">
+              <div class="step-num">2</div>
+              <div class="step-title">Measure alignment</div>
+              <div class="step-desc">Compute MMD between the candidate and proxy feature distributions using a Gaussian RBF kernel.</div>
+            </div>
+            <div class="method-step">
+              <div class="step-num">3</div>
+              <div class="step-title">Score utility</div>
+              <div class="step-desc">Return a higher score for candidates with smaller proxy distance, then test whether those scores predict real downstream performance.</div>
+            </div>
           </div>
-          <div class="method-step">
-            <div class="step-num">2</div>
-            <div class="step-title">Measure</div>
-            <div class="step-desc">Empirical MMD with a Gaussian RBF kernel between candidate and proxy feature distributions. Sample 5,000 instances per dataset; bandwidth \(\sigma=1.0\).</div>
-          </div>
-          <div class="method-step">
-            <div class="step-num">3</div>
-            <div class="step-title">Score</div>
-            <div class="step-desc">Higher DAS ⟹ stronger distributional alignment with the domain proxy ⟹ higher predicted downstream utility.</div>
-          </div>
-        </div>
-
-        <div class="method-callout">
-          <i class="fas fa-square-root-variable"></i>
-          <span>Motivated by the domain-adaptation bound (Theorem 36, Redko et al., 2020): under a fixed model family and training protocol,
-          a smaller \(d_{\mathrm{MMD}}\) yields a tighter upper bound on target risk. The triangle inequality further justifies a proxy-based
-          formulation, avoiding benchmark contamination.</span>
         </div>
 
         <div class="proxy-grid">
@@ -439,6 +472,11 @@
             <span class="proxy-pill"><strong>Law:</strong> DISC-Law-SFT</span>
           </div>
         </div>
+
+        <div class="method-callout">
+          <i class="fas fa-square-root-variable"></i>
+          <span><strong>Why it matters:</strong> DAS is grounded in domain-adaptation intuition: under a fixed model family and training protocol, better alignment between training data and the target domain should reduce target-side risk. The proxy formulation makes this usable without touching benchmark test data.</span>
+        </div>
       </div>
     </div>
   </section>
@@ -447,65 +485,56 @@
   <section id="experiments" class="section">
     <div class="container">
       <h2 class="section-title"><span class="section-num">05</span>Benchmarks &amp; Experimental Setup</h2>
+      <p class="lead lead-wide">
+        The experiments instantiate the two-track benchmark under fixed resources and protocols. In Track 1, every construction method
+        consumes the same raw sources and is judged by the downstream performance of models trained on its synthesized data. In Track 2,
+        every quality metric scores the same candidate datasets and is judged by how well those scores predict the released ground-truth
+        downstream performance records.
+      </p>
 
-      <div class="info-grid">
-        <div class="info-card">
-          <div class="info-title"><i class="fas fa-bullseye"></i> Downstream-grounded evaluation</div>
-          <div class="info-body">
-            Both tracks are evaluated by <strong>downstream performance</strong> under a shared protocol. Track 1 measures the utility
-            of <em>constructed</em> data through SFT; Track 2 evaluates whether a metric predicts downstream
-            utility via <strong>Pearson correlation</strong> with significance.
-          </div>
+      <div class="experiment-overview">
+        <div class="experiment-principle">
+          <i class="fas fa-bullseye"></i>
+          <span>A data preparation decision is evaluated only through downstream model behavior: either by training on the produced data, or by testing whether a metric predicts the performance of training on candidate data.</span>
         </div>
 
-        <div class="info-card">
-          <div class="info-title"><i class="fas fa-layer-group"></i> Domains &amp; target benchmarks</div>
-          <div class="info-body">
-            <ul class="compact-list">
-              <li><strong>General:</strong> MMLU-Redux</li>
-              <li><strong>Math:</strong> AIME24, AMC23, Gaokao2024, GSM8K, MATH, MinervaMath, OlympiadBench</li>
-              <li><strong>Science:</strong> MMLU-STEM, MMLU-Pro, GPQA, SuperGPQA, ChemBench, PIQA, SciBench</li>
-              <li><strong>Medical:</strong> MedR-Bench, MedMCQA, MedCaseReasoning</li>
-              <li><strong>Finance:</strong> XFinBench, FinEval-KR, CPA-QKA</li>
-              <li><strong>Law:</strong> LegalBench, LexGLUE</li>
+        <div class="experiment-track-grid">
+          <div class="experiment-track-card">
+            <div class="experiment-track-tag">Track 1 · Data Construction</div>
+            <h3>Same raw sources, downstream judgment</h3>
+            <p>
+              DataFlow workflows, direct LLM generation, ReAct-style agents, and Data-Construction-Skill all consume the same domain source corpus and output synthesized SFT data.
+            </p>
+            <ul>
+              <li><strong>Sources:</strong> domain books and long-form materials converted to Markdown with MinerU; General Text uses a 150 MB FineWeb sample.</li>
+              <li><strong>Training:</strong> each synthesized dataset is mixed with Dolly-15k; the reference baseline uses Dolly-15k alone.</li>
+              <li><strong>Models:</strong> Qwen2.5-7B and Llama-3.1-8B are fine-tuned with the same LlamaFactory recipe.</li>
+            </ul>
+          </div>
+
+          <div class="experiment-track-card">
+            <div class="experiment-track-tag">Track 2 · Data Quality Evaluation</div>
+            <h3>Same candidate pools, predictive judgment</h3>
+            <p>
+              DAS and 17 DataFlow quality/diversity evaluators score the same public SFT candidate pools before downstream training.
+            </p>
+            <ul>
+              <li><strong>Candidates:</strong> each domain mixes in-domain and out-of-domain public SFT datasets.</li>
+              <li><strong>Ground truth:</strong> every candidate is actually fine-tuned and evaluated to obtain downstream utility.</li>
+              <li><strong>Models:</strong> Qwen2.5-7B, Llama-3.1-8B, and Mistral-7B-v0.3 test whether metric correlations are model-dependent.</li>
             </ul>
           </div>
         </div>
 
-        <div class="info-card">
-          <div class="info-title"><i class="fas fa-microchip"></i> Base models</div>
-          <div class="info-body">
-            <ul class="compact-list">
-              <li><strong>Track 1:</strong> Qwen2.5-7B, Llama-3.1-8B</li>
-              <li><strong>Track 2:</strong> Qwen2.5-7B, Llama-3.1-8B, Mistral-7B-v0.3</li>
-            </ul>
-            Track 2 spans three architectural families to test whether observed correlations are model-dependent.
-          </div>
-        </div>
-
-        <div class="info-card">
-          <div class="info-title"><i class="fas fa-sliders"></i> Fine-tuning protocol</div>
-          <div class="info-body">
-            All models fine-tuned via <strong>LlamaFactory</strong> under a consistent recipe: 3 epochs, cosine LR, initial LR \(5.0 \times 10^{-6}\),
-            warmup ratio 0.1, per-device batch 1, gradient accumulation 4 (global batch 32), 8×H20 cluster.
-            Non-instruct base models are augmented with Dolly-15k.
-          </div>
-        </div>
-
-        <div class="info-card">
-          <div class="info-title"><i class="fas fa-book"></i> Source corpus (Track 1)</div>
-          <div class="info-body">
-            Domain books from Wikibooks / FreeBookCentre / Open Textbook Library; Chinese university and competition materials for Math/Science;
-            FineWeb 150 MB sample (100 Markdown files) for General. All PDFs converted to Markdown via <strong>MinerU</strong> for a unified input format.
-          </div>
-        </div>
-
-        <div class="info-card">
-          <div class="info-title"><i class="fas fa-database"></i> Candidate pools (Track 2)</div>
-          <div class="info-body">
-            For each domain, an in-domain pool (e.g., DataFlow-10k, WizardLM, UltraChat, OpenR1-Math-220k, MegaScience, UltraMedical, …)
-            plus an out-of-domain pool drawn from other domains. Each candidate is fine-tuned and benchmarked to provide ground-truth
-            downstream utility.
+        <div class="experiment-standard">
+          <div class="experiment-standard-title">Shared domains and target benchmarks</div>
+          <div class="experiment-domain-list">
+            <span><strong>General:</strong> MMLU-Redux</span>
+            <span><strong>Math:</strong> AIME24, AMC23, Gaokao2024, GSM8K, MATH, MinervaMath, OlympiadBench</span>
+            <span><strong>Science:</strong> MMLU-STEM, MMLU-Pro, GPQA, SuperGPQA, ChemBench, PIQA, SciBench</span>
+            <span><strong>Medical:</strong> MedR-Bench, MedMCQA, MedCaseReasoning</span>
+            <span><strong>Finance:</strong> XFinBench, FinEval-KR, CPA-KQA</span>
+            <span><strong>Law:</strong> LegalBench, LexGLUE</span>
           </div>
         </div>
       </div>
@@ -516,10 +545,10 @@
   <section id="track1-results" class="section section-alt">
     <div class="container">
       <h2 class="section-title"><span class="section-num">06</span>Track 1 · Data Construction Results</h2>
-      <p class="lead">
-        We compare four families of construction methods — <strong>DataFlow-based</strong>, <strong>Direct LLM</strong>, <strong>Agent-based</strong>,
-        and our <strong>Skill-based</strong> baseline — by fine-tuning Qwen2.5-7B and Llama-3.1-8B on each method's synthesized dataset and measuring
-        downstream performance across six domains.
+      <p class="lead lead-wide">
+        Track 1 asks whether synthesized domain data actually helps after fine-tuning. We compare DataFlow workflows, direct LLM generation,
+        ReAct-style agents, and our skill-guided agent baseline. Each method receives the same raw source corpus; its output is mixed with
+        Dolly-15k, used to fine-tune Qwen2.5-7B or Llama-3.1-8B, and evaluated on held-out benchmarks across six domains.
       </p>
 
       <div class="tabbar" data-tab-group="t1">
@@ -530,27 +559,25 @@
       <!-- Qwen -->
       <div class="tabpane active" id="t1-qwen" data-tab-group="t1">
         <div class="callout callout-blue">
-          <div class="callout-title"><i class="fas fa-star"></i> Highlights — Qwen2.5-7B</div>
+          <div class="callout-title"><i class="fas fa-star"></i> What Qwen2.5-7B shows</div>
           <ul class="callout-list">
-            <li><strong>Math (Avg):</strong> Agent <strong>GPT-5.2</strong> 25.5; Agent <strong>GLM-4.7</strong> 25.3; Agent <strong>Qwen3.5-Plus</strong> 25.2; <strong>Skill</strong> 24.1.</li>
-            <li><strong>General Text (MMLU-Redux):</strong> <strong>Skill</strong> 78.2 — ties with Claude Opus 4.6 (LLM) for best.</li>
-            <li><strong>Finance (Avg):</strong> Agent <strong>GPT-5.3-codex</strong> 59.3 — outperforms the no-synthetic baseline (57.8).</li>
-            <li><strong>Medicine (Avg):</strong> Agent <strong>Gemini 3.0 Pro</strong> 43.8 — large gain over no-synthetic (36.3).</li>
-            <li><strong>Law (Avg):</strong> <strong>DataFlow</strong> 77.2; DataFlow-Skill 74.7; agent-based variants competitive.</li>
-            <li><strong>Skill on Minerva-Math:</strong> 14.0 — best across all generators in this column.</li>
+            <li><strong>No method family dominates.</strong> On Qwen2.5-7B, agents achieve the strongest averages in Math and Medical, DataFlow is strongest in Law, and different methods win different sub-benchmarks.</li>
+            <li><strong>Skill is competitive but not universal.</strong> It ties for best on General Text (78.2), is best on Minerva-Math (14.0), and stays near the top on Math Avg (24.1).</li>
+            <li><strong>Synthetic data is not automatically beneficial.</strong> The no-synthetic Dolly-only baseline remains strong in several domains, especially Science (27.9 Avg).</li>
+            <li><strong>Finance and Medicine reward different construction behavior.</strong> DataFlow-Skill is strongest on Finance (64.8), while Gemini agent is strongest on Medicine (43.8).</li>
           </ul>
         </div>
 
         <details class="details" open>
-          <summary>Table A. Qwen2.5-7B — Math (per benchmark) &amp; General &amp; Finance (Avg)</summary>
+          <summary>Table A. Qwen2.5-7B — Math, General, and Finance</summary>
           <div class="table-wrap">
             <table class="paper-table">
               <thead>
                 <tr>
                   <th rowspan="2" class="left-col">Generator</th>
                   <th colspan="8" class="group-1">Math</th>
-                  <th class="group-2">General</th>
-                  <th class="group-3">Finance</th>
+                  <th colspan="2" class="group-2">General</th>
+                  <th colspan="4" class="group-3">Finance</th>
                 </tr>
                 <tr>
                   <th class="group-1">GSM8K</th>
@@ -562,6 +589,10 @@
                   <th class="group-1">GK24</th>
                   <th class="group-1">Avg</th>
                   <th class="group-2">MMLU-R</th>
+                  <th class="group-2">Avg</th>
+                  <th class="group-3">CPA-KQA</th>
+                  <th class="group-3">FinEval-KR</th>
+                  <th class="group-3">XFinBench</th>
                   <th class="group-3">Avg</th>
                 </tr>
               </thead>
@@ -569,48 +600,48 @@
                 <tr class="row-baseline">
                   <td class="left-col">No synthetic training</td>
                   <td>69.9</td><td>17.5</td><td>0.0</td><td>10.7</td><td>10.7</td><td><strong>39.8</strong></td><td>16.5</td><td>23.6</td>
-                  <td>77.7</td>
-                  <td>57.8</td>
+                  <td>77.7</td><td>77.7</td>
+                  <td>57.6</td><td>59.4</td><td>56.3</td><td>57.8</td>
                 </tr>
-                <tr class="group-divider"><td colspan="11">DataFlow-based Generators</td></tr>
-                <tr><td class="left-col">DataFlow</td><td>56.5</td><td>7.5</td><td>0.0</td><td>7.7</td><td>7.9</td><td>27.4</td><td>17.6</td><td>17.8</td><td>77.9</td><td>54.9</td></tr>
-                <tr><td class="left-col">DataFlow-Skill</td><td>56.7</td><td>10.0</td><td>0.0</td><td>8.8</td><td>6.2</td><td>22.8</td><td><strong>28.6</strong></td><td>19.0</td><td>76.5</td><td>—</td></tr>
-                <tr class="group-divider"><td colspan="11">LLM-based Generators</td></tr>
-                <tr><td class="left-col">Claude Opus 4.6</td><td>68.8</td><td>12.5</td><td>0.0</td><td>8.8</td><td>9.8</td><td>35.5</td><td>14.3</td><td>21.4</td><td><strong>78.2</strong></td><td>44.4</td></tr>
-                <tr><td class="left-col">Gemini 3.0 Pro</td><td>72.1</td><td>20.0</td><td>0.0</td><td>10.7</td><td>11.4</td><td>37.9</td><td>15.4</td><td>23.9</td><td>77.8</td><td>52.2</td></tr>
-                <tr><td class="left-col">GPT-5.2</td><td>66.7</td><td>17.5</td><td>0.0</td><td>7.7</td><td>11.1</td><td>32.7</td><td>14.3</td><td>21.4</td><td>77.9</td><td>48.1</td></tr>
-                <tr class="group-divider"><td colspan="11">Agent-based Generators</td></tr>
-                <tr><td class="left-col">Qwen3.5-Plus</td><td><strong>72.7</strong></td><td>22.5</td><td><strong>3.3</strong></td><td>11.0</td><td>11.6</td><td>38.7</td><td>16.5</td><td>25.2</td><td>77.6</td><td>51.1</td></tr>
-                <tr><td class="left-col">GLM-4.7</td><td>71.4</td><td>22.5</td><td><strong>3.3</strong></td><td>9.6</td><td>11.6</td><td>37.9</td><td>20.9</td><td>25.3</td><td>77.3</td><td>53.3</td></tr>
-                <tr><td class="left-col">Claude Opus 4.6</td><td>69.4</td><td>10.0</td><td>0.0</td><td>11.0</td><td>8.9</td><td>33.8</td><td>19.8</td><td>21.8</td><td>75.9</td><td>41.9</td></tr>
-                <tr><td class="left-col">Gemini 3.0 Pro</td><td>70.1</td><td>15.0</td><td>0.0</td><td>8.8</td><td>10.8</td><td>35.7</td><td>20.9</td><td>23.0</td><td>77.7</td><td>53.7</td></tr>
-                <tr><td class="left-col">GPT-5.2</td><td>69.6</td><td><strong>25.0</strong></td><td><strong>3.3</strong></td><td>8.8</td><td>9.9</td><td>35.6</td><td>26.4</td><td><strong>25.5</strong></td><td>77.7</td><td>43.2</td></tr>
-                <tr><td class="left-col">GPT-5.3-codex</td><td>70.8</td><td>15.0</td><td>0.0</td><td>11.0</td><td><strong>11.7</strong></td><td>38.5</td><td>13.2</td><td>22.9</td><td>77.6</td><td><strong>59.3</strong></td></tr>
+                <tr class="group-divider"><td class="left-col">DataFlow-based Generators</td><td colspan="14"></td></tr>
+                <tr><td class="left-col">DataFlow</td><td>56.5</td><td>7.5</td><td>0.0</td><td>7.7</td><td>7.9</td><td>27.4</td><td>17.6</td><td>17.8</td><td>77.9</td><td>77.9</td><td>51.0</td><td>54.5</td><td>59.3</td><td>54.9</td></tr>
+                <tr><td class="left-col">DataFlow-Skill</td><td>56.7</td><td>10.0</td><td>0.0</td><td>8.8</td><td>6.2</td><td>22.8</td><td><strong>28.6</strong></td><td>19.0</td><td>76.5</td><td>76.5</td><td><strong>60.0</strong></td><td><strong>65.4</strong></td><td><strong>68.9</strong></td><td><strong>64.8</strong></td></tr>
+                <tr class="group-divider"><td class="left-col">LLM-based Generators</td><td colspan="14"></td></tr>
+                <tr><td class="left-col">Claude Opus 4.6</td><td>68.8</td><td>12.5</td><td>0.0</td><td>8.8</td><td>9.8</td><td>35.5</td><td>14.3</td><td>21.4</td><td><strong>78.2</strong></td><td><strong>78.2</strong></td><td>37.6</td><td>39.6</td><td>55.9</td><td>44.4</td></tr>
+                <tr><td class="left-col">Gemini 3.0 Pro</td><td>72.1</td><td>20.0</td><td>0.0</td><td>10.7</td><td>11.4</td><td>37.9</td><td>15.4</td><td>23.9</td><td>77.8</td><td>77.8</td><td>48.6</td><td>49.5</td><td>58.4</td><td>52.2</td></tr>
+                <tr><td class="left-col">GPT-5.2</td><td>66.7</td><td>17.5</td><td>0.0</td><td>7.7</td><td>11.1</td><td>32.7</td><td>14.3</td><td>21.4</td><td>77.9</td><td>77.9</td><td>47.1</td><td>43.6</td><td>53.6</td><td>48.1</td></tr>
+                <tr class="group-divider"><td class="left-col">Agent-based Generators</td><td colspan="14"></td></tr>
+                <tr><td class="left-col">Qwen3.5-Plus</td><td><strong>72.7</strong></td><td>22.5</td><td><strong>3.3</strong></td><td>11.0</td><td>11.6</td><td>38.7</td><td>16.5</td><td>25.2</td><td>77.6</td><td>77.6</td><td>48.1</td><td>49.5</td><td>55.6</td><td>51.1</td></tr>
+                <tr><td class="left-col">GLM-4.7</td><td>71.4</td><td>22.5</td><td><strong>3.3</strong></td><td>9.6</td><td>11.6</td><td>37.9</td><td>20.9</td><td>25.3</td><td>77.3</td><td>77.3</td><td>51.4</td><td>55.4</td><td>53.1</td><td>53.3</td></tr>
+                <tr><td class="left-col">Claude Opus 4.6</td><td>69.4</td><td>10.0</td><td>0.0</td><td>11.0</td><td>8.9</td><td>33.8</td><td>19.8</td><td>21.8</td><td>75.9</td><td>75.9</td><td>32.4</td><td>39.6</td><td>53.8</td><td>41.9</td></tr>
+                <tr><td class="left-col">Gemini 3.0 Pro</td><td>70.1</td><td>15.0</td><td>0.0</td><td>8.8</td><td>10.8</td><td>35.7</td><td>20.9</td><td>23.0</td><td>77.7</td><td>77.7</td><td>53.3</td><td>52.5</td><td>55.4</td><td>53.7</td></tr>
+                <tr><td class="left-col">GPT-5.2</td><td>69.6</td><td><strong>25.0</strong></td><td><strong>3.3</strong></td><td>8.8</td><td>9.9</td><td>35.6</td><td>26.4</td><td><strong>25.5</strong></td><td>77.7</td><td>77.7</td><td>39.1</td><td>39.6</td><td>51.0</td><td>43.2</td></tr>
+                <tr><td class="left-col">GPT-5.3-codex</td><td>70.8</td><td>15.0</td><td>0.0</td><td>11.0</td><td><strong>11.7</strong></td><td>38.5</td><td>13.2</td><td>22.9</td><td>77.6</td><td>77.6</td><td>58.6</td><td>63.4</td><td>55.9</td><td>59.3</td></tr>
                 <tr class="row-ours">
                   <td class="left-col"><strong>Skill (Claude Opus 4.6)</strong></td>
                   <td>72.6</td><td>17.5</td><td><strong>3.3</strong></td><td><strong>14.0</strong></td><td>11.1</td><td>36.8</td><td>13.2</td><td>24.1</td>
-                  <td><strong>78.2</strong></td>
-                  <td>55.5</td>
+                  <td><strong>78.2</strong></td><td><strong>78.2</strong></td>
+                  <td>57.6</td><td>53.5</td><td>55.4</td><td>55.5</td>
                 </tr>
               </tbody>
             </table>
           </div>
           <div class="table-note">
-            Abbreviations: M-Math = Minerva-Math · OB = OlympiadBench · M500 = MATH-500 · GK24 = Gaokao 2024 · MMLU-R = MMLU-Redux.
+            Abbreviations: M-Math = Minerva-Math · OB = OlympiadBench · M500 = MATH-500 · GK24 = Gaokao 2024 · MMLU-R = MMLU-Redux · CPA-KQA = CPA-KQA · FEKR = FinEval-KR · XFB = XFinBench.
             Source: Table <code>synthetic_data_mgf_qwen</code> in the paper. Bold marks the best in each column.
           </div>
         </details>
 
         <details class="details">
-          <summary>Table B. Qwen2.5-7B — Law &amp; Medicine (per benchmark) &amp; Science (Avg)</summary>
+          <summary>Table B. Qwen2.5-7B — Law, Medical, and Science</summary>
           <div class="table-wrap">
             <table class="paper-table">
               <thead>
                 <tr>
                   <th rowspan="2" class="left-col">Generator</th>
                   <th colspan="3" class="group-1">Law</th>
-                  <th colspan="4" class="group-2">Medicine</th>
-                  <th class="group-3">Science</th>
+                  <th colspan="4" class="group-2">Medical</th>
+                  <th colspan="8" class="group-3">Science</th>
                 </tr>
                 <tr>
                   <th class="group-1">LegalBench</th>
@@ -620,6 +651,13 @@
                   <th class="group-2">MedMCQA</th>
                   <th class="group-2">MedR-Bench</th>
                   <th class="group-2">Avg</th>
+                  <th class="group-3">MMLU-STEM</th>
+                  <th class="group-3">MMLU-Pro</th>
+                  <th class="group-3">GPQA</th>
+                  <th class="group-3">SuperGPQA</th>
+                  <th class="group-3">ChemBench</th>
+                  <th class="group-3">PIQA</th>
+                  <th class="group-3">SciBench</th>
                   <th class="group-3">Avg</th>
                 </tr>
               </thead>
@@ -628,33 +666,34 @@
                   <td class="left-col">No synthetic training</td>
                   <td>86.9</td><td>62.0</td><td>74.5</td>
                   <td>13.6</td><td>27.4</td><td>67.8</td><td>36.3</td>
-                  <td><strong>27.9</strong></td>
+                  <td><strong>47.5</strong></td><td><strong>28.6</strong></td><td>21.1</td><td><strong>15.7</strong></td><td><strong>24.3</strong></td><td><strong>52.7</strong></td><td>5.2</td><td><strong>27.9</strong></td>
                 </tr>
-                <tr class="group-divider"><td colspan="9">DataFlow-based Generators</td></tr>
-                <tr><td class="left-col">DataFlow</td><td>89.7</td><td><strong>64.8</strong></td><td><strong>77.2</strong></td><td>9.9</td><td>29.4</td><td>63.6</td><td>34.3</td><td>20.1</td></tr>
-                <tr><td class="left-col">DataFlow-Skill</td><td><strong>92.0</strong></td><td>57.4</td><td>74.7</td><td>11.9</td><td>24.1</td><td>65.6</td><td>33.9</td><td>23.4</td></tr>
-                <tr class="group-divider"><td colspan="9">LLM-based Generators</td></tr>
-                <tr><td class="left-col">Claude Opus 4.6</td><td>88.0</td><td>63.2</td><td>75.6</td><td>13.9</td><td>8.1</td><td>66.8</td><td>29.6</td><td>23.1</td></tr>
-                <tr><td class="left-col">Gemini 3.0 Pro</td><td>85.9</td><td>63.5</td><td>74.7</td><td>12.2</td><td>6.0</td><td>69.1</td><td>29.1</td><td>23.8</td></tr>
-                <tr><td class="left-col">GPT-5.2</td><td>89.2</td><td>60.9</td><td>75.0</td><td>10.6</td><td>23.3</td><td>66.0</td><td>33.3</td><td>22.4</td></tr>
-                <tr class="group-divider"><td colspan="9">Agent-based Generators</td></tr>
-                <tr><td class="left-col">Qwen3.5-Plus</td><td>90.2</td><td>61.0</td><td>75.6</td><td>16.5</td><td>16.5</td><td>68.3</td><td>33.8</td><td>26.8</td></tr>
-                <tr><td class="left-col">GLM-4.7</td><td>84.8</td><td>61.4</td><td>73.1</td><td>15.2</td><td>10.6</td><td>66.8</td><td>30.9</td><td>23.5</td></tr>
-                <tr><td class="left-col">Claude Opus 4.6</td><td>65.2</td><td>48.8</td><td>57.0</td><td><strong>16.6</strong></td><td>50.7</td><td>54.3</td><td>40.5</td><td>22.6</td></tr>
-                <tr><td class="left-col">Gemini 3.0 Pro</td><td>57.5</td><td>55.5</td><td>56.5</td><td>15.8</td><td><strong>52.3</strong></td><td>63.4</td><td><strong>43.8</strong></td><td>26.2</td></tr>
-                <tr><td class="left-col">GPT-5.2</td><td>61.7</td><td>51.9</td><td>56.8</td><td>14.7</td><td>45.0</td><td>59.0</td><td>39.6</td><td>24.8</td></tr>
-                <tr><td class="left-col">GPT-5.3-codex</td><td>87.8</td><td>63.4</td><td>75.6</td><td>13.6</td><td>20.3</td><td><strong>70.0</strong></td><td>34.6</td><td>19.8</td></tr>
+                <tr class="group-divider"><td class="left-col">DataFlow-based Generators</td><td colspan="15"></td></tr>
+                <tr><td class="left-col">DataFlow</td><td>89.7</td><td><strong>64.8</strong></td><td><strong>77.2</strong></td><td>9.9</td><td>29.4</td><td>63.6</td><td>34.3</td><td>37.9</td><td>23.9</td><td>20.7</td><td>11.8</td><td>15.7</td><td>28.8</td><td>2.0</td><td>20.1</td></tr>
+                <tr><td class="left-col">DataFlow-Skill</td><td><strong>92.0</strong></td><td>57.4</td><td>74.7</td><td>11.9</td><td>24.1</td><td>65.6</td><td>33.9</td><td>44.2</td><td>24.6</td><td>18.0</td><td>13.0</td><td>18.8</td><td>43.5</td><td>2.0</td><td>23.4</td></tr>
+                <tr class="group-divider"><td class="left-col">LLM-based Generators</td><td colspan="15"></td></tr>
+                <tr><td class="left-col">Claude Opus 4.6</td><td>88.0</td><td>63.2</td><td>75.6</td><td>13.9</td><td>8.1</td><td>66.8</td><td>29.6</td><td>38.7</td><td>24.6</td><td>22.4</td><td>13.1</td><td>19.3</td><td>40.9</td><td>2.7</td><td>23.1</td></tr>
+                <tr><td class="left-col">Gemini 3.0 Pro</td><td>85.9</td><td>63.5</td><td>74.7</td><td>12.2</td><td>6.0</td><td>69.1</td><td>29.1</td><td>39.7</td><td>25.7</td><td>19.7</td><td>12.7</td><td>21.2</td><td>44.0</td><td>3.3</td><td>23.8</td></tr>
+                <tr><td class="left-col">GPT-5.2</td><td>89.2</td><td>60.9</td><td>75.0</td><td>10.6</td><td>23.3</td><td>66.0</td><td>33.3</td><td>38.3</td><td>24.6</td><td><strong>22.9</strong></td><td>12.8</td><td>17.9</td><td>38.1</td><td>2.0</td><td>22.4</td></tr>
+                <tr class="group-divider"><td class="left-col">Agent-based Generators</td><td colspan="15"></td></tr>
+                <tr><td class="left-col">Qwen3.5-Plus</td><td>90.2</td><td>61.0</td><td>75.6</td><td>16.5</td><td>16.5</td><td>68.3</td><td>33.8</td><td><strong>47.5</strong></td><td>26.9</td><td>21.7</td><td>14.8</td><td>22.9</td><td>48.6</td><td><strong>5.3</strong></td><td>26.8</td></tr>
+                <tr><td class="left-col">GLM-4.7</td><td>84.8</td><td>61.4</td><td>73.1</td><td>15.2</td><td>10.6</td><td>66.8</td><td>30.9</td><td>42.0</td><td>25.7</td><td>18.9</td><td>12.7</td><td>19.4</td><td>43.6</td><td>2.3</td><td>23.5</td></tr>
+                <tr><td class="left-col">Claude Opus 4.6</td><td>65.2</td><td>48.8</td><td>57.0</td><td><strong>16.6</strong></td><td>50.7</td><td>54.3</td><td>40.5</td><td>36.6</td><td>24.1</td><td>19.0</td><td>12.9</td><td>19.2</td><td>44.1</td><td>2.2</td><td>22.6</td></tr>
+                <tr><td class="left-col">Gemini 3.0 Pro</td><td>57.5</td><td>55.5</td><td>56.5</td><td>15.8</td><td><strong>52.3</strong></td><td>63.4</td><td><strong>43.8</strong></td><td>46.0</td><td>27.6</td><td>22.4</td><td>14.7</td><td>20.3</td><td>50.0</td><td>2.5</td><td>26.2</td></tr>
+                <tr><td class="left-col">GPT-5.2</td><td>61.7</td><td>51.9</td><td>56.8</td><td>14.7</td><td>45.0</td><td>59.0</td><td>39.6</td><td>44.0</td><td>25.3</td><td>21.1</td><td>14.0</td><td>20.2</td><td>46.4</td><td>2.8</td><td>24.8</td></tr>
+                <tr><td class="left-col">GPT-5.3-codex</td><td>87.8</td><td>63.4</td><td>75.6</td><td>13.6</td><td>20.3</td><td><strong>70.0</strong></td><td>34.6</td><td>35.9</td><td>22.4</td><td>16.4</td><td>11.2</td><td>16.5</td><td>33.1</td><td>3.4</td><td>19.8</td></tr>
                 <tr class="row-ours">
                   <td class="left-col"><strong>Skill (Claude Opus 4.6)</strong></td>
                   <td>85.5</td><td>61.7</td><td>73.6</td>
                   <td>9.9</td><td>15.3</td><td>65.4</td><td>30.2</td>
-                  <td>21.4</td>
+                  <td>39.8</td><td>22.8</td><td>19.2</td><td>12.2</td><td>17.1</td><td>36.9</td><td>1.7</td><td>21.4</td>
                 </tr>
               </tbody>
             </table>
           </div>
           <div class="table-note">
-            Source: Table <code>synthetic_data_slm_qwen</code> in the paper. Science Avg aggregates 7 benchmarks (MMLU-STEM, MMLU-Pro, GPQA, SuperGPQA, ChemBench, PIQA, SciBench).
+            Abbreviations: MCR = MedCaseReasoning · MMCQA = MedMCQA · MRB = MedR-Bench · MSTEM = MMLU-STEM · MPRO = MMLU-Pro · SGPQA = SuperGPQA · CB = ChemBench · SB = SciBench.
+            Source: Table <code>synthetic_data_slm_qwen</code> in the paper.
           </div>
         </details>
       </div>
@@ -662,26 +701,25 @@
       <!-- Llama -->
       <div class="tabpane" id="t1-llama" data-tab-group="t1">
         <div class="callout callout-purple">
-          <div class="callout-title"><i class="fas fa-star"></i> Highlights — Llama-3.1-8B</div>
+          <div class="callout-title"><i class="fas fa-star"></i> What Llama-3.1-8B shows</div>
           <ul class="callout-list">
-            <li><strong>Finance (Avg):</strong> <strong>DataFlow-Skill</strong> 36.5 — best overall; <strong>Skill</strong> 34.2 (vs. no-synthetic 15.1, ~2.3× lift).</li>
-            <li><strong>Medicine (Avg):</strong> Claude Opus 4.6 (LLM) 36.1; <strong>Skill</strong> 35.4 — close to best.</li>
-            <li><strong>Law (Avg):</strong> GPT-5.2 (LLM) 76.4 — strong gains for several methods over no-synthetic baseline (69.5).</li>
-            <li><strong>Science:</strong> No-synthetic baseline (13.2) is hardest to beat — many generators degrade Science Avg, motivating end-to-end evaluation.</li>
-            <li><strong>Math &amp; General:</strong> Most generators reduce performance vs. no-synthetic, indicating instruction-tuning before domain SFT remains an open challenge for Llama-3.1-8B.</li>
+            <li><strong>The clearest positive signal is Finance.</strong> DataFlow-Skill reaches 36.5 and Data-Construction-Skill reaches 34.2, both substantially above the Dolly-only baseline of 15.1.</li>
+            <li><strong>Medicine also benefits from constructed data.</strong> Claude Opus direct generation reaches 36.1, and Skill is close at 35.4.</li>
+            <li><strong>Science is a counterexample to simple scaling.</strong> The Dolly-only baseline is best at 13.2, and most generated datasets reduce performance.</li>
+            <li><strong>Math and General Text are also fragile.</strong> Many generators underperform the no-synthetic baseline, showing why the benchmark must measure downstream utility rather than dataset appearance.</li>
           </ul>
         </div>
 
         <details class="details" open>
-          <summary>Table C. Llama-3.1-8B — Math (per benchmark) &amp; General &amp; Finance (Avg)</summary>
+          <summary>Table C. Llama-3.1-8B — Math, General, and Finance</summary>
           <div class="table-wrap">
             <table class="paper-table">
               <thead>
                 <tr>
                   <th rowspan="2" class="left-col">Generator</th>
                   <th colspan="8" class="group-1">Math</th>
-                  <th class="group-2">General</th>
-                  <th class="group-3">Finance</th>
+                  <th colspan="2" class="group-2">General</th>
+                  <th colspan="4" class="group-3">Finance</th>
                 </tr>
                 <tr>
                   <th class="group-1">GSM8K</th>
@@ -693,6 +731,10 @@
                   <th class="group-1">GK24</th>
                   <th class="group-1">Avg</th>
                   <th class="group-2">MMLU-R</th>
+                  <th class="group-2">Avg</th>
+                  <th class="group-3">CPA-KQA</th>
+                  <th class="group-3">FinEval-KR</th>
+                  <th class="group-3">XFinBench</th>
                   <th class="group-3">Avg</th>
                 </tr>
               </thead>
@@ -700,47 +742,48 @@
                 <tr class="row-baseline">
                   <td class="left-col">No synthetic training</td>
                   <td><strong>33.9</strong></td><td><strong>10.0</strong></td><td>0.0</td><td>6.6</td><td>3.7</td><td><strong>13.6</strong></td><td>14.3</td><td><strong>11.7</strong></td>
-                  <td><strong>67.1</strong></td>
-                  <td>15.1</td>
+                  <td><strong>67.1</strong></td><td><strong>67.1</strong></td>
+                  <td>12.6</td><td>12.4</td><td>20.3</td><td>15.1</td>
                 </tr>
-                <tr class="group-divider"><td colspan="11">DataFlow-based Generators</td></tr>
-                <tr><td class="left-col">DataFlow</td><td>8.4</td><td>10.0</td><td>0.0</td><td>4.8</td><td>2.5</td><td>6.1</td><td>8.8</td><td>5.8</td><td>51.1</td><td>31.4</td></tr>
-                <tr><td class="left-col">DataFlow-Skill</td><td>8.7</td><td>2.5</td><td>0.0</td><td>4.4</td><td>3.3</td><td>7.2</td><td>16.5</td><td>6.1</td><td>48.4</td><td><strong>36.5</strong></td></tr>
-                <tr class="group-divider"><td colspan="11">LLM-based Generators</td></tr>
-                <tr><td class="left-col">Claude Opus 4.6</td><td>28.7</td><td>5.0</td><td>0.0</td><td>6.2</td><td>2.8</td><td>11.2</td><td>11.0</td><td>9.3</td><td>52.9</td><td>28.4</td></tr>
-                <tr><td class="left-col">Gemini 3.0 Pro</td><td>30.7</td><td>7.5</td><td>0.0</td><td><strong>8.1</strong></td><td>3.7</td><td>12.6</td><td>14.3</td><td>11.0</td><td>50.8</td><td>31.2</td></tr>
-                <tr><td class="left-col">GPT-5.2</td><td>26.8</td><td>2.5</td><td>0.0</td><td>7.7</td><td>4.1</td><td>10.2</td><td>13.2</td><td>9.2</td><td>47.4</td><td>27.4</td></tr>
-                <tr class="group-divider"><td colspan="11">Agent-based Generators</td></tr>
-                <tr><td class="left-col">Qwen3.5-Plus</td><td>33.7</td><td>5.0</td><td>0.0</td><td>6.6</td><td><strong>4.4</strong></td><td>11.3</td><td>12.1</td><td>10.4</td><td>50.4</td><td>27.4</td></tr>
-                <tr><td class="left-col">GLM-4.7</td><td>31.8</td><td>2.5</td><td>0.0</td><td>5.9</td><td>3.1</td><td>13.0</td><td><strong>17.6</strong></td><td>10.6</td><td>49.2</td><td>30.8</td></tr>
-                <tr><td class="left-col">Claude Opus 4.6</td><td>16.4</td><td>5.0</td><td>0.0</td><td>6.6</td><td>2.5</td><td>7.7</td><td>8.8</td><td>6.7</td><td>47.5</td><td>28.9</td></tr>
-                <tr><td class="left-col">Gemini 3.0 Pro</td><td>29.6</td><td>7.5</td><td>0.0</td><td>6.2</td><td>3.6</td><td>11.5</td><td><strong>17.6</strong></td><td>10.9</td><td>47.9</td><td>29.3</td></tr>
-                <tr><td class="left-col">GPT-5.2</td><td>28.7</td><td>5.0</td><td>0.0</td><td>6.6</td><td>4.0</td><td>10.4</td><td>15.4</td><td>10.0</td><td>49.0</td><td>29.5</td></tr>
-                <tr><td class="left-col">GPT-5.3-codex</td><td>29.9</td><td>2.5</td><td>0.0</td><td>5.9</td><td>2.8</td><td>12.2</td><td>14.3</td><td>9.7</td><td>51.3</td><td>30.3</td></tr>
+                <tr class="group-divider"><td class="left-col">DataFlow-based Generators</td><td colspan="14"></td></tr>
+                <tr><td class="left-col">DataFlow</td><td>8.4</td><td>10.0</td><td>0.0</td><td>4.8</td><td>2.5</td><td>6.1</td><td>8.8</td><td>5.8</td><td>51.1</td><td>51.1</td><td>27.1</td><td>26.7</td><td>40.5</td><td>31.4</td></tr>
+                <tr><td class="left-col">DataFlow-Skill</td><td>8.7</td><td>2.5</td><td>0.0</td><td>4.4</td><td>3.3</td><td>7.2</td><td>16.5</td><td>6.1</td><td>48.4</td><td>48.4</td><td>34.8</td><td><strong>31.7</strong></td><td>43.0</td><td><strong>36.5</strong></td></tr>
+                <tr class="group-divider"><td class="left-col">LLM-based Generators</td><td colspan="14"></td></tr>
+                <tr><td class="left-col">Claude Opus 4.6</td><td>28.7</td><td>5.0</td><td>0.0</td><td>6.2</td><td>2.8</td><td>11.2</td><td>11.0</td><td>9.3</td><td>52.9</td><td>52.9</td><td>22.9</td><td>24.8</td><td>37.5</td><td>28.4</td></tr>
+                <tr><td class="left-col">Gemini 3.0 Pro</td><td>30.7</td><td>7.5</td><td>0.0</td><td><strong>8.1</strong></td><td>3.7</td><td>12.6</td><td>14.3</td><td>11.0</td><td>50.8</td><td>50.8</td><td>23.8</td><td>27.7</td><td>42.1</td><td>31.2</td></tr>
+                <tr><td class="left-col">GPT-5.2</td><td>26.8</td><td>2.5</td><td>0.0</td><td>7.7</td><td>4.1</td><td>10.2</td><td>13.2</td><td>9.2</td><td>47.4</td><td>47.4</td><td>25.2</td><td>24.8</td><td>32.2</td><td>27.4</td></tr>
+                <tr class="group-divider"><td class="left-col">Agent-based Generators</td><td colspan="14"></td></tr>
+                <tr><td class="left-col">Qwen3.5-Plus</td><td>33.7</td><td>5.0</td><td>0.0</td><td>6.6</td><td><strong>4.4</strong></td><td>11.3</td><td>12.1</td><td>10.4</td><td>50.4</td><td>50.4</td><td>23.3</td><td>20.8</td><td>38.2</td><td>27.4</td></tr>
+                <tr><td class="left-col">GLM-4.7</td><td>31.8</td><td>2.5</td><td>0.0</td><td>5.9</td><td>3.1</td><td>13.0</td><td><strong>17.6</strong></td><td>10.6</td><td>49.2</td><td>49.2</td><td>23.8</td><td>25.7</td><td>43.0</td><td>30.8</td></tr>
+                <tr><td class="left-col">Claude Opus 4.6</td><td>16.4</td><td>5.0</td><td>0.0</td><td>6.6</td><td>2.5</td><td>7.7</td><td>8.8</td><td>6.7</td><td>47.5</td><td>47.5</td><td>23.3</td><td>25.7</td><td>37.7</td><td>28.9</td></tr>
+                <tr><td class="left-col">Gemini 3.0 Pro</td><td>29.6</td><td>7.5</td><td>0.0</td><td>6.2</td><td>3.6</td><td>11.5</td><td><strong>17.6</strong></td><td>10.9</td><td>47.9</td><td>47.9</td><td>25.2</td><td>21.8</td><td>40.9</td><td>29.3</td></tr>
+                <tr><td class="left-col">GPT-5.2</td><td>28.7</td><td>5.0</td><td>0.0</td><td>6.6</td><td>4.0</td><td>10.4</td><td>15.4</td><td>10.0</td><td>49.0</td><td>49.0</td><td>21.9</td><td>21.8</td><td><strong>44.8</strong></td><td>29.5</td></tr>
+                <tr><td class="left-col">GPT-5.3-codex</td><td>29.9</td><td>2.5</td><td>0.0</td><td>5.9</td><td>2.8</td><td>12.2</td><td>14.3</td><td>9.7</td><td>51.3</td><td>51.3</td><td>23.3</td><td>25.7</td><td>41.8</td><td>30.3</td></tr>
                 <tr class="row-ours">
                   <td class="left-col"><strong>Skill (Claude Opus 4.6)</strong></td>
                   <td>16.5</td><td>7.5</td><td>0.0</td><td>4.4</td><td>3.0</td><td>9.5</td><td>11.0</td><td>7.4</td>
-                  <td>51.3</td>
-                  <td>34.2</td>
+                  <td>51.3</td><td>51.3</td>
+                  <td><strong>36.2</strong></td><td><strong>31.7</strong></td><td>34.7</td><td>34.2</td>
                 </tr>
               </tbody>
             </table>
           </div>
           <div class="table-note">
+            Abbreviations: M-Math = Minerva-Math · OB = OlympiadBench · M500 = MATH-500 · GK24 = Gaokao 2024 · MMLU-R = MMLU-Redux · CPA-KQA = CPA-KQA · FEKR = FinEval-KR · XFB = XFinBench.
             Source: Table <code>synthetic_data_mgf_llama</code> in the paper. Bold marks the best in each column.
           </div>
         </details>
 
         <details class="details">
-          <summary>Table D. Llama-3.1-8B — Law &amp; Medicine (per benchmark) &amp; Science (Avg)</summary>
+          <summary>Table D. Llama-3.1-8B — Law, Medical, and Science</summary>
           <div class="table-wrap">
             <table class="paper-table">
               <thead>
                 <tr>
                   <th rowspan="2" class="left-col">Generator</th>
                   <th colspan="3" class="group-1">Law</th>
-                  <th colspan="4" class="group-2">Medicine</th>
-                  <th class="group-3">Science</th>
+                  <th colspan="4" class="group-2">Medical</th>
+                  <th colspan="8" class="group-3">Science</th>
                 </tr>
                 <tr>
                   <th class="group-1">LegalBench</th>
@@ -750,6 +793,13 @@
                   <th class="group-2">MedMCQA</th>
                   <th class="group-2">MedR-Bench</th>
                   <th class="group-2">Avg</th>
+                  <th class="group-3">MMLU-STEM</th>
+                  <th class="group-3">MMLU-Pro</th>
+                  <th class="group-3">GPQA</th>
+                  <th class="group-3">SuperGPQA</th>
+                  <th class="group-3">ChemBench</th>
+                  <th class="group-3">PIQA</th>
+                  <th class="group-3">SciBench</th>
                   <th class="group-3">Avg</th>
                 </tr>
               </thead>
@@ -758,32 +808,33 @@
                   <td class="left-col">No synthetic training</td>
                   <td>87.9</td><td>51.1</td><td>69.5</td>
                   <td>9.9</td><td>17.1</td><td>34.3</td><td>20.4</td>
-                  <td><strong>13.2</strong></td>
+                  <td><strong>25.3</strong></td><td><strong>14.7</strong></td><td><strong>14.1</strong></td><td><strong>8.2</strong></td><td><strong>14.7</strong></td><td>11.4</td><td><strong>3.8</strong></td><td><strong>13.2</strong></td>
                 </tr>
-                <tr class="group-divider"><td colspan="9">DataFlow-based Generators</td></tr>
-                <tr><td class="left-col">DataFlow</td><td>84.0</td><td>61.3</td><td>72.7</td><td>12.3</td><td>21.3</td><td>56.1</td><td>29.9</td><td>4.7</td></tr>
-                <tr><td class="left-col">DataFlow-Skill</td><td>85.2</td><td>61.0</td><td>73.1</td><td>12.4</td><td><strong>33.8</strong></td><td>61.8</td><td>36.0</td><td>3.1</td></tr>
-                <tr class="group-divider"><td colspan="9">LLM-based Generators</td></tr>
-                <tr><td class="left-col">Claude Opus 4.6</td><td>85.9</td><td>56.1</td><td>71.0</td><td>16.3</td><td>27.2</td><td>64.8</td><td><strong>36.1</strong></td><td>9.3</td></tr>
-                <tr><td class="left-col">Gemini 3.0 Pro</td><td>86.1</td><td>61.9</td><td>74.0</td><td>16.4</td><td>16.3</td><td>67.6</td><td>33.4</td><td>9.1</td></tr>
-                <tr><td class="left-col">GPT-5.2</td><td><strong>91.6</strong></td><td>61.3</td><td><strong>76.4</strong></td><td>13.5</td><td>26.9</td><td>56.8</td><td>32.4</td><td>8.5</td></tr>
-                <tr class="group-divider"><td colspan="9">Agent-based Generators</td></tr>
-                <tr><td class="left-col">Qwen3.5-Plus</td><td>84.2</td><td>62.3</td><td>73.2</td><td>16.7</td><td>13.7</td><td>69.9</td><td>33.4</td><td>9.3</td></tr>
-                <tr><td class="left-col">GLM-4.7</td><td>83.8</td><td>60.7</td><td>72.2</td><td>15.6</td><td>20.0</td><td>67.1</td><td>34.2</td><td>8.9</td></tr>
-                <tr><td class="left-col">Claude Opus 4.6</td><td>87.4</td><td>52.1</td><td>69.8</td><td>14.8</td><td>18.4</td><td>64.8</td><td>32.7</td><td>9.1</td></tr>
-                <tr><td class="left-col">Gemini 3.0 Pro</td><td>86.3</td><td>60.6</td><td>73.5</td><td>16.5</td><td>15.9</td><td><strong>70.2</strong></td><td>34.2</td><td>5.5</td></tr>
-                <tr><td class="left-col">GPT-5.2</td><td>84.5</td><td>61.3</td><td>72.9</td><td>16.8</td><td>21.3</td><td>60.1</td><td>32.7</td><td>4.3</td></tr>
-                <tr><td class="left-col">GPT-5.3-codex</td><td>89.6</td><td><strong>63.1</strong></td><td>76.3</td><td><strong>18.3</strong></td><td>23.7</td><td>65.0</td><td>35.7</td><td>8.3</td></tr>
+                <tr class="group-divider"><td class="left-col">DataFlow-based Generators</td><td colspan="15"></td></tr>
+                <tr><td class="left-col">DataFlow</td><td>84.0</td><td>61.3</td><td>72.7</td><td>12.3</td><td>21.3</td><td>56.1</td><td>29.9</td><td>8.5</td><td>3.7</td><td>5.1</td><td>2.5</td><td>6.1</td><td>6.4</td><td>0.3</td><td>4.7</td></tr>
+                <tr><td class="left-col">DataFlow-Skill</td><td>85.2</td><td>61.0</td><td>73.1</td><td>12.4</td><td><strong>33.8</strong></td><td>61.8</td><td>36.0</td><td>5.6</td><td>1.7</td><td>3.3</td><td>1.7</td><td>4.6</td><td>4.8</td><td>0.0</td><td>3.1</td></tr>
+                <tr class="group-divider"><td class="left-col">LLM-based Generators</td><td colspan="15"></td></tr>
+                <tr><td class="left-col">Claude Opus 4.6</td><td>85.9</td><td>56.1</td><td>71.0</td><td>16.3</td><td>27.2</td><td>64.8</td><td><strong>36.1</strong></td><td>17.1</td><td>10.4</td><td>10.8</td><td>6.1</td><td>9.2</td><td>9.6</td><td>2.2</td><td>9.3</td></tr>
+                <tr><td class="left-col">Gemini 3.0 Pro</td><td>86.1</td><td>61.9</td><td>74.0</td><td>16.4</td><td>16.3</td><td>67.6</td><td>33.4</td><td>16.7</td><td>10.3</td><td>9.8</td><td>6.1</td><td>10.2</td><td>9.2</td><td>1.6</td><td>9.1</td></tr>
+                <tr><td class="left-col">GPT-5.2</td><td><strong>91.6</strong></td><td>61.3</td><td><strong>76.4</strong></td><td>13.5</td><td>26.9</td><td>56.8</td><td>32.4</td><td>14.7</td><td>7.4</td><td>10.7</td><td>4.9</td><td>9.0</td><td><strong>11.9</strong></td><td>0.6</td><td>8.5</td></tr>
+                <tr class="group-divider"><td class="left-col">Agent-based Generators</td><td colspan="15"></td></tr>
+                <tr><td class="left-col">Qwen3.5-Plus</td><td>84.2</td><td>62.3</td><td>73.2</td><td>16.7</td><td>13.7</td><td>69.9</td><td>33.4</td><td>17.3</td><td>9.5</td><td>11.1</td><td>5.1</td><td>12.1</td><td>8.9</td><td>0.9</td><td>9.3</td></tr>
+                <tr><td class="left-col">GLM-4.7</td><td>83.8</td><td>60.7</td><td>72.2</td><td>15.6</td><td>20.0</td><td>67.1</td><td>34.2</td><td>16.9</td><td>9.9</td><td>9.1</td><td>5.4</td><td>12.0</td><td>8.4</td><td>0.6</td><td>8.9</td></tr>
+                <tr><td class="left-col">Claude Opus 4.6</td><td>87.4</td><td>52.1</td><td>69.8</td><td>14.8</td><td>18.4</td><td>64.8</td><td>32.7</td><td>17.0</td><td>9.4</td><td>10.7</td><td>5.7</td><td>10.9</td><td>7.8</td><td>1.9</td><td>9.1</td></tr>
+                <tr><td class="left-col">Gemini 3.0 Pro</td><td>86.3</td><td>60.6</td><td>73.5</td><td>16.5</td><td>15.9</td><td><strong>70.2</strong></td><td>34.2</td><td>10.1</td><td>3.8</td><td>5.0</td><td>2.3</td><td>5.9</td><td>11.0</td><td>0.3</td><td>5.5</td></tr>
+                <tr><td class="left-col">GPT-5.2</td><td>84.5</td><td>61.3</td><td>72.9</td><td>16.8</td><td>21.3</td><td>60.1</td><td>32.7</td><td>8.1</td><td>3.3</td><td>2.9</td><td>2.2</td><td>4.4</td><td>9.1</td><td>0.2</td><td>4.3</td></tr>
+                <tr><td class="left-col">GPT-5.3-codex</td><td>89.6</td><td><strong>63.1</strong></td><td>76.3</td><td><strong>18.3</strong></td><td>23.7</td><td>65.0</td><td>35.7</td><td>16.4</td><td>9.0</td><td>10.4</td><td>5.3</td><td>8.5</td><td>7.7</td><td>0.6</td><td>8.3</td></tr>
                 <tr class="row-ours">
                   <td class="left-col"><strong>Skill (Claude Opus 4.6)</strong></td>
                   <td>86.6</td><td>53.7</td><td>70.2</td>
                   <td>13.7</td><td>27.9</td><td>64.6</td><td>35.4</td>
-                  <td>7.5</td>
+                  <td>16.2</td><td>8.5</td><td>9.1</td><td>4.8</td><td>7.5</td><td>5.9</td><td>0.2</td><td>7.5</td>
                 </tr>
               </tbody>
             </table>
           </div>
           <div class="table-note">
+            Abbreviations: MCR = MedCaseReasoning · MMCQA = MedMCQA · MRB = MedR-Bench · MSTEM = MMLU-STEM · MPRO = MMLU-Pro · SGPQA = SuperGPQA · CB = ChemBench · SB = SciBench.
             Source: Table <code>synthetic_data_slm_llama</code> in the paper.
           </div>
         </details>
@@ -795,12 +846,21 @@
   <section id="track2-results" class="section">
     <div class="container">
       <h2 class="section-title"><span class="section-num">07</span>Track 2 · Data Quality Evaluation Results</h2>
-      <p class="lead">
-        For each metric \(Q\), we report Pearson correlation \(\rho\) between metric scores and downstream performance across three base
-        models per domain. <strong>DAS</strong> (defined as \(-d_{\mathrm{MMD}}\) to a domain proxy) achieves consistent significant negative
-        correlations with empirical performance in reasoning-intensive domains. Values are signed; <strong>↓</strong> on a metric column header means
-        more-negative is better (DAS / MMD); <strong>↑</strong> means more-positive is better (quality/diversity scorers).
+      <p class="lead lead-wide">
+        Track 2 asks whether a data-quality metric can rank candidate datasets before paying the cost of fine-tuning. For each candidate,
+        we compute a metric score, then compare those scores with the empirical downstream performance of models actually fine-tuned on
+        the same candidates. A reliable metric should produce correlations with the expected sign, across domains and across base models.
       </p>
+
+      <div class="callout callout-blue">
+        <div class="callout-title"><i class="fas fa-chart-line"></i> How to read the correlation tables</div>
+        <ul class="callout-list">
+          <li><strong>DAS is reported through its MMD distance.</strong> Smaller MMD means better alignment, so a strong <em>negative</em> MMD-performance correlation corresponds to a strong <em>positive</em> DAS-performance correlation.</li>
+          <li><strong>Underline marks reliability.</strong> Underlined cells are statistically significant and point in the theoretically expected direction.</li>
+          <li><strong>Avg columns matter most.</strong> They summarize whether a metric remains useful across Qwen2.5-7B, Llama-3.1-8B, and Mistral-7B-v0.3.</li>
+          <li><strong>The main result:</strong> Among the tested metrics, DAS has the strongest or tied strongest domain-average correlation in General, Math, Science, and Medical, while Finance and Law favor different non-DAS metrics.</li>
+        </ul>
+      </div>
 
       <div class="legend">
         <span class="legend-item"><span class="legend-swatch sw-neg"></span> negative correlation</span>
@@ -926,10 +986,9 @@
           </table>
         </div>
         <div class="table-note">
-          Source: Table <code>eval_results_gms</code> in the paper. Underline indicates statistically significant correlation (\(p &lt; 0.05\))
-          consistent with theoretical expectation. Bold marks the best Avg per domain among consistent metrics. <strong>MMD</strong> achieves the
-          strongest consistent average correlation in <em>General</em> (\(-0.68\)) and <em>Math</em> (\(-0.86\)), and is best for <em>Science</em>
-          among distribution-based predictors.
+          Source: Table <code>eval_results_gms</code> in the paper. The MMD row is the distance form of DAS, so negative correlations indicate
+          that higher DAS predicts better downstream performance. MMD/DAS is strongest in <em>General</em> (\(-0.68\)) and <em>Math</em>
+          (\(-0.86\)); in <em>Science</em>, it is close to QuRating-Expertise and remains strong across two of three base models.
         </div>
       </details>
 
@@ -1049,9 +1108,9 @@
           </table>
         </div>
         <div class="table-note">
-          Source: Table <code>eval_results_mfl</code> in the paper. <strong>MMD</strong> is the strongest consistent predictor in <em>Medical</em>
-          (\(-0.77\)). In <em>Finance</em> the best is <strong>Superfiltering</strong> (\(+0.67\)); in <em>Law</em> the best is <strong>MTLD</strong> (\(+0.52\)).
-          <em>No single metric dominates all six domains</em> — a key open challenge motivated by DataPrep-Bench.
+          Source: Table <code>eval_results_mfl</code> in the paper. MMD/DAS is strongest in <em>Medical</em> (\(-0.77\)). In <em>Finance</em>,
+          <strong>Superfiltering</strong> is strongest (\(+0.67\)); in <em>Law</em>, <strong>MTLD</strong> is strongest (\(+0.52\)).
+          No single metric is reliable across every domain.
         </div>
       </details>
 
@@ -1108,55 +1167,40 @@
       <div class="findings-grid">
         <div class="finding-card">
           <div class="finding-icon"><i class="fas fa-flag-checkered"></i></div>
-          <h4>Constructed data must be evaluated end-to-end</h4>
-          <p>SFT on synthesized data does <em>not</em> always improve downstream performance. Outcomes are strongly domain- and model-dependent — motivating downstream-grounded evaluation rather than surface-level quality proxies.</p>
+          <h4>More synthetic data is not automatically better</h4>
+          <p>Adding domain-specific synthesized data on top of Dolly-15k frequently reduces downstream performance. Since the protocol changes only the added domain data, these regressions show why data construction must be evaluated end to end.</p>
         </div>
         <div class="finding-card">
           <div class="finding-icon"><i class="fas fa-cogs"></i></div>
-          <h4>Direct LLM &amp; fixed workflows: useful but limited</h4>
-          <p>Direct LLM generation provides a simple baseline but is unstable; DataFlow-based workflows excel where corpora can be transformed via stable procedures (best Qwen Law 77.2; best Llama Finance 36.5) but are weaker on Math and Science.</p>
+          <h4>No construction family wins everywhere</h4>
+          <p>DataFlow-style workflows do well in structured settings such as Law and Finance, while agent-based methods are often competitive or strongest in reasoning-heavy domains. Direct LLM prompting is a useful simple baseline, but its results vary substantially across domains.</p>
         </div>
         <div class="finding-card">
           <div class="finding-icon"><i class="fas fa-robot"></i></div>
-          <h4>Agent-based construction shows strong potential</h4>
-          <p>Agents frequently take top spots in Math, Finance, Medicine, Law — e.g., agent <strong>GPT-5.2</strong> 25.5 (Qwen Math), agent <strong>GPT-5.3-codex</strong> 59.3 (Qwen Finance), agent <strong>Gemini 3.0 Pro</strong> 43.8 (Qwen Medicine).</p>
-        </div>
-        <div class="finding-card">
-          <div class="finding-icon"><i class="fas fa-tools"></i></div>
-          <h4>Skill-based construction is a strong baseline</h4>
-          <p>Data-Construction-Skill ties for best on Qwen General (78.2) and best on Minerva-Math (14.0); on Llama-3.1-8B Finance it lifts no-synthetic from 15.1 to <strong>34.2</strong>. Not yet uniformly dominant — leaving headroom for future skills.</p>
+          <h4>Skill-guided construction is strong but selective</h4>
+          <p>Data-Construction-Skill is competitive in knowledge-extraction settings, tying for best on Qwen General and lifting Llama Finance from 15.1 to 34.2. Its weaker Science results suggest room for future skills that better handle open-ended scientific reasoning.</p>
         </div>
         <div class="finding-card">
           <div class="finding-icon"><i class="fas fa-chart-line"></i></div>
-          <h4>DAS strongly predicts downstream utility</h4>
-          <p>DAS exhibits consistent, statistically significant correlations with empirical performance: Math <strong>+0.86</strong> Avg (Mistral +0.94, Llama +0.93), Medical <strong>+0.77</strong>, Science <strong>+0.72</strong>, General Text <strong>+0.68</strong>.</p>
+          <h4>DAS is the most consistent overall quality signal</h4>
+          <p>DAS strongly tracks downstream utility in Math (+0.86), Medical (+0.77), Science (+0.72), and General Text (+0.68), making distributional alignment the most consistent overall signal among the tested metric families.</p>
         </div>
         <div class="finding-card">
           <div class="finding-icon"><i class="fas fa-balance-scale"></i></div>
-          <h4>Cross-domain generalization remains open</h4>
-          <p>No single quality metric is uniformly reliable across all domains. DAS attenuates in Finance (+0.18) and flips direction in Law (−0.36); Superfiltering wins Finance (+0.67) and MTLD wins Law (+0.52) — among the diversity- and quality-based baselines.</p>
+          <h4>Existing metrics are narrow or sign-inconsistent</h4>
+          <p>Quality and diversity metrics often work in one domain but weaken or flip sign in another. Finance and Law favor different non-DAS metrics, with Superfiltering strongest in Finance and MTLD strongest in Law, so no metric is uniformly reliable.</p>
         </div>
         <div class="finding-card">
           <div class="finding-icon"><i class="fas fa-bolt"></i></div>
-          <h4>DAS is practical at scale</h4>
-          <p>DAS averages <strong>306 s</strong> per dataset — substantially faster than Vendi Score (459 s) and Deita-Quality (435 s) — while delivering markedly stronger predictive correlation. A favorable accuracy/efficiency trade-off.</p>
-        </div>
-        <div class="finding-card">
-          <div class="finding-icon"><i class="fas fa-vials"></i></div>
-          <h4>Model-architecture coverage matters</h4>
-          <p>Qwen2.5-7B, Llama-3.1-8B, and Mistral-7B-v0.3 give distinct downstream signals. Track 2 spans all three to test whether observed correlations are model-dependent — DAS remains consistent across architectures in reasoning-intensive domains.</p>
-        </div>
-        <div class="finding-card">
-          <div class="finding-icon"><i class="fas fa-handshake"></i></div>
-          <h4>A common testbed for the community</h4>
-          <p>By fixing source corpora, base models, training recipes, and downstream benchmarks, DataPrep-Bench enables head-to-head comparison of agents, workflows, and metrics — turning data preparation into a measurable, reproducible research target.</p>
+          <h4>DataPrep-Bench makes comparison reproducible</h4>
+          <p>By fixing raw corpora, candidate pools, base models, training recipes, and downstream benchmarks, the benchmark turns data preparation from anecdotal comparison into a measurable testbed for agents, workflows, skills, and metrics.</p>
         </div>
       </div>
     </div>
   </section>
 
   <!-- ========= RESOURCES ========= -->
-  <section id="resources" class="section">
+  <!-- <section id="resources" class="section">
     <div class="container">
       <h2 class="section-title"><span class="section-num">09</span>Released Resources</h2>
       <p class="lead">DataPrep-Bench is released as a <strong>reproducible, downstream-grounded testbed</strong>. Each resource below targets one component of the protocol so any new agent, workflow, or metric can be plugged in under identical conditions.</p>
@@ -1198,10 +1242,10 @@
         </div>
       </div>
     </div>
-  </section>
+  </section> -->
 
   <!-- ========= BIBTEX ========= -->
-  <section id="bibtex" class="section section-alt">
+  <!-- <section id="bibtex" class="section section-alt">
     <div class="container narrow">
       <h2 class="section-title"><span class="section-num">10</span>Citation</h2>
       <p class="lead">If you find DataPrep-Bench useful for your research, please consider citing our work:</p>
@@ -1220,7 +1264,7 @@
 }</pre>
       </div>
     </div>
-  </section>
+  </section> -->
 
   <!-- ========= FOOTER ========= -->
   <footer class="footer">
